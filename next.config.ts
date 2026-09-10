@@ -9,6 +9,7 @@ const isDev = process.env.NODE_ENV !== "production";
 
 const csp = [
   "default-src 'self'",
+  "manifest-src 'self'",
   "img-src 'self' data: blob:",
   "media-src 'self'",
   "style-src 'self' 'unsafe-inline'",
