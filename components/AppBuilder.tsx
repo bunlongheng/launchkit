@@ -16,6 +16,10 @@ export function AppBuilder() {
   const [prompt, setPrompt] = useState("");
 
   const canGenerate = description.trim().length > 0;
+  // buildPrompt is a pure string join, so recomputing it every render is cheaper
+  // than tracking a snapshot of the inputs. It is only used to tell whether what
+  // is on screen still matches the current settings.
+  const isStale = prompt !== "" && prompt !== buildPrompt({ description, features, stack });
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -31,11 +35,11 @@ export function AppBuilder() {
             onClick={() => setPrompt(buildPrompt({ description, features, stack }))}
           >
             <Sparkles data-icon="inline-start" />
-            Generate Prompt
+            {prompt === "" ? "Generate Prompt" : "Regenerate Prompt"}
           </Button>
         </div>
       </section>
-      <PromptPreview prompt={prompt} />
+      <PromptPreview prompt={prompt} stale={isStale} />
     </div>
   );
 }
