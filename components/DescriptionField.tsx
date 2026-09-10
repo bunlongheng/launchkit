@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils";
 import { DESCRIPTION_MAX } from "@/lib/buildPrompt";
 import { StepLabel } from "@/components/StepLabel";
 
-type Props = { value: string; onChange: (v: string) => void };
+type Props = { value: string; onChange: (v: string) => void; invalid?: boolean };
 
-export function DescriptionField({ value, onChange }: Props) {
+export function DescriptionField({ value, onChange, invalid = false }: Props) {
   // A live region on the counter would announce on every keystroke. Only speak up
   // once the limit is close enough to matter.
   const remaining = DESCRIPTION_MAX - value.length;
@@ -31,7 +31,11 @@ export function DescriptionField({ value, onChange }: Props) {
         maxLength={DESCRIPTION_MAX}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Describe what you want to build..."
-        className="min-h-36 flex-1 resize-none rounded-2xl bg-background/60 px-4 py-3 text-base leading-relaxed md:text-base"
+        aria-invalid={invalid || undefined}
+        className={cn(
+          "min-h-36 flex-1 resize-none rounded-2xl bg-background/60 px-4 py-3 text-base leading-relaxed md:text-base",
+          invalid && "border-destructive focus-visible:ring-destructive/40",
+        )}
       />
     </div>
   );

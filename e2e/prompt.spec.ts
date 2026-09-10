@@ -14,9 +14,11 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await expect(page.getByText("Add a name and a description to generate")).toBeVisible();
   await expect(output).toHaveCount(0);
 
-  // Clicking while incomplete must move focus to the field that is missing.
+  // Clicking while incomplete must flag the missing field and move focus to it.
+  const nameField = page.getByRole("textbox", { name: "Name your app" });
   await generate.click();
-  await expect(page.getByRole("textbox", { name: "Name your app" })).toBeFocused();
+  await expect(nameField).toBeFocused();
+  await expect(nameField).toHaveAttribute("aria-invalid", "true");
   await expect(output).toHaveCount(0);
 
   // Generate needs both a name and a description; a name alone is not enough.

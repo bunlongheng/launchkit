@@ -10,12 +10,25 @@ import { AppTypeSelector } from "@/components/AppTypeSelector";
 import { PromptPreview } from "@/components/PromptPreview";
 import { buildPrompt, buildSetupPrompt, DEFAULT_FEATURES, type AppType, type Features } from "@/lib/buildPrompt";
 
+// A one-shot animation is a DOM concern, not React state: removing the class and
+// forcing a reflow before re-adding it is what lets it replay on a second attempt.
+function nudge(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.focus();
+  el.classList.remove("shake");
+  void el.offsetWidth;
+  el.classList.add("shake");
+  el.addEventListener("animationend", () => el.classList.remove("shake"), { once: true });
+}
+
 export function AppBuilder() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [features, setFeatures] = useState<Features>(DEFAULT_FEATURES);
   const [appType, setAppType] = useState<AppType>("web");
   const [prompt, setPrompt] = useState<{ setup: string; build: string } | null>(null);
+  const [attempts, setAttempts] = useState(0);
   const outputRef = useRef<HTMLDivElement>(null);
   const revealed = useRef(false);
 
@@ -46,9 +59,17 @@ export function AppBuilder() {
     <div className="flex flex-col gap-6">
       <section className="rise rounded-3xl border border-border/70 bg-white/80 p-5 shadow-[0_1px_2px_rgb(0_0_0/0.03),0_24px_48px_-32px_rgb(30_27_75/0.25)] backdrop-blur sm:p-7 [animation-delay:60ms]">
         <div className="grid gap-7 md:grid-cols-2">
-          <DescriptionField value={description} onChange={setDescription} />
+          <DescriptionField
+            value={description}
+            onChange={setDescription}
+            invalid={attempts > 0 && needsDescription}
+          />
           <div className="flex flex-col gap-7">
-            <NameField value={name} onChange={setName} />
+            <NameField
+              value={name}
+              onChange={setName}
+              invalid={attempts > 0 && needsName}
+              />
             <AppTypeSelector value={appType} onChange={setAppType} />
             <FeatureToggles value={features} onChange={setFeatures} />
           </div>
@@ -63,7 +84,10 @@ export function AppBuilder() {
             aria-describedby={canGenerate ? undefined : "generate-hint"}
             onClick={() => {
               if (!canGenerate) {
-                document.getElementById(needsName ? "name" : "description")?.focus();
+                setAttempts((n) => n + 1);
+                // After the commit, otherwise the re-render that turns on the error
+                // border rewrites className and wipes the class we just added.
+                requestAnimationFrame(() => nudge(needsName ? "name" : "description"));
                 return;
               }
               setPrompt({
