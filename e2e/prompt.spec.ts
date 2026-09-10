@@ -19,6 +19,8 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await generate.click();
   await expect(nameField).toBeFocused();
   await expect(nameField).toHaveAttribute("aria-invalid", "true");
+  // Both empty fields are flagged, not just the one that took focus.
+  await expect(page.getByText("Required", { exact: true })).toHaveCount(2);
   await expect(output).toHaveCount(0);
 
   // Generate needs both a name and a description; a name alone is not enough.

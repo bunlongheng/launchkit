@@ -18,12 +18,18 @@ export function DescriptionField({ value, onChange, invalid = false }: Props) {
     <div className="flex h-full flex-col">
       <div className="mb-3 flex items-center justify-between">
         <StepLabel n={1} htmlFor="description">What do you want to build?</StepLabel>
-        <span
-          className={cn("text-xs tabular-nums", atLimit ? "font-semibold text-amber-700" : "text-muted-foreground")}
-          aria-live={nearLimit ? "polite" : "off"}
-        >
-          {atLimit ? `Limit reached, ${DESCRIPTION_MAX}` : `${value.length}/${DESCRIPTION_MAX}`}
-        </span>
+        {invalid ? (
+          // A 0/4000 counter says nothing useful on an empty field that just failed
+          // validation, so it gives way to the same Required label the name field uses.
+          <span className="text-xs font-medium text-destructive">Required</span>
+        ) : (
+          <span
+            className={cn("text-xs tabular-nums", atLimit ? "font-semibold text-amber-700" : "text-muted-foreground")}
+            aria-live={nearLimit ? "polite" : "off"}
+          >
+            {atLimit ? `Limit reached, ${DESCRIPTION_MAX}` : `${value.length}/${DESCRIPTION_MAX}`}
+          </span>
+        )}
       </div>
       <Textarea
         id="description"
