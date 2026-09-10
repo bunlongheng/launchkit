@@ -10,12 +10,19 @@ export type Features = {
 };
 
 export type PromptInput = {
+  name: string;
   description: string;
   features: Features;
   appType: AppType;
 };
 
-export const DESCRIPTION_MAX = 500;
+export const NAME_MAX = 40;
+// 500 was far too tight: a real 1,745 character description was silently truncated
+// mid-word by the browser on paste. Generous now, still bounded.
+export const DESCRIPTION_MAX = 4000;
+
+export const slugify = (name: string) =>
+  name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
 // The app type decides the stack, so there is nothing separate to pick.
 export const APP_TYPES: { key: AppType; label: string; stack: string }[] = [
@@ -64,7 +71,7 @@ const REQUIREMENTS = [
   "Use secure defaults",
   "Validate inputs",
   "Handle errors properly",
-  "Make the UI responsive",
+  "Make the UI fully responsive on phone, tablet and desktop",
   "Keep dependencies minimal",
 ];
 
@@ -79,10 +86,10 @@ const AUDIT = [
 ];
 
 const ONBOARD = [
-  "Inspect the existing repository first",
-  "Understand architecture, dependencies, scripts, environment variables, conventions, and important flows",
-  "Reuse existing patterns before introducing new ones",
-  "Do not rewrite working parts unnecessarily",
+  "Register the app in the local apps dashboard with its port, repo and start command",
+  "Add its tab colour and shell alias so it gets a dedicated terminal tab",
+  "Link the project to its deployment target",
+  "Generate the app icon and a baseline screenshot",
 ];
 
 const AUTH = [
@@ -93,13 +100,14 @@ const AUTH = [
 ];
 
 const OPEN_SOURCE = [
+  "Publish the repository on GitHub",
   "Add an MIT LICENSE file",
   "Write a README covering setup, usage and project layout",
   "Document every required environment variable and keep real values out of the repository",
 ];
 
 const DEPLOY = [
-  "Add production-ready deployment configuration",
+  "Add production-ready deployment configuration for Vercel",
   "Include required environment variables",
   "Include build and start commands",
 ];
@@ -116,6 +124,8 @@ const AFTER = [
   "Run TypeScript checks",
   "Run tests if available",
   "Fix errors",
+  "Check the UI at phone, tablet and desktop widths",
+  "Audit the result, fix what it finds, and loop until it grades A+",
   "Summarize what changed",
 ];
 
@@ -123,8 +133,30 @@ const bullets = (items: string[]) => items.map((i) => `- ${i}`).join("\n");
 const numbered = (items: string[]) =>
   items.map((i, n) => `${n + 1}. ${i}`).join("\n");
 
-export function buildPrompt({ description, features, appType }: PromptInput): string {
+// The tab alias is underscores only, never dashes: it is used as a shell function
+// name, and a dash is not valid there.
+export const aliasFor = (name: string) =>
+  `_${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "")}`;
+
+/** Step 1. Run in the current tab, then stop and hand off. */
+export function buildSetupPrompt(name: string): string {
+  const alias = aliasFor(name);
+  return [
+    `appName = ${name.trim()}`,
+    `Set up a new project for me. Do this part only.`,
+    numbered([
+      "Create a new GitHub repo for it.",
+      `Add the Claude tab alias \`${alias}\`.`,
+      `Open a new terminal tab, run \`${alias}\`, and confirm the tab opens.`,
+    ]),
+    "Do not build anything yet. Once that tab is open, stop and tell me it is ready. I will paste the build prompt into it, so the work is reported under that session rather than this one.",
+  ].join("\n\n");
+}
+
+/** Step 2. Paste into the tab step 1 opened. */
+export function buildPrompt({ name, description, features, appType }: PromptInput): string {
   const sections: string[] = [
+    `appName = ${name.trim()}`,
     `Build the following application:\n\n${description.trim()}`,
     `Configuration:\n${bullets([
       `Open source: ${yesNo(features.openSource)}`,
@@ -132,7 +164,7 @@ export function buildPrompt({ description, features, appType }: PromptInput): st
       `Visibility: ${features.isPublic ? "Public" : "Private"}`,
       `Authentication: ${yesNo(features.auth)}`,
       `Audit: ${yesNo(features.audit)}`,
-      `Onboard existing local app: ${yesNo(features.onboard)}`,
+      `Onboard into local apps: ${yesNo(features.onboard)}`,
       `App type: ${appTypeFor(appType).label}`,
       `Stack: ${appTypeFor(appType).stack}`,
     ])}`,

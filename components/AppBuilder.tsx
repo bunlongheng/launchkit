@@ -3,25 +3,36 @@
 import { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { DescriptionField } from "@/components/DescriptionField";
+import { NameField } from "@/components/NameField";
 import { FeatureToggles } from "@/components/FeatureToggles";
 import { AppTypeSelector } from "@/components/AppTypeSelector";
 import { PromptPreview } from "@/components/PromptPreview";
-import { buildPrompt, DEFAULT_FEATURES, type AppType, type Features } from "@/lib/buildPrompt";
+import { buildPrompt, buildSetupPrompt, DEFAULT_FEATURES, type AppType, type Features } from "@/lib/buildPrompt";
 
 export function AppBuilder() {
+  const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [features, setFeatures] = useState<Features>(DEFAULT_FEATURES);
   const [appType, setAppType] = useState<AppType>("web");
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState<{ setup: string; build: string } | null>(null);
   const outputRef = useRef<HTMLDivElement>(null);
   const revealed = useRef(false);
 
-  const canGenerate = description.trim().length > 0;
+  const needsName = name.trim().length === 0;
+  const needsDescription = description.trim().length === 0;
+  const canGenerate = !needsName && !needsDescription;
+  // A greyed-out button with no reason is a dead end, so say what is missing.
+  const missing = needsName && needsDescription
+    ? "Add a name and a description to generate"
+    : needsName
+      ? "Add a name to generate"
+      : "Add a description to generate";
   // buildPrompt is a pure string join, so recomputing it every render is cheaper
   // than tracking a snapshot of the inputs. It is only used to tell whether what
   // is on screen still matches the current settings.
-  const isStale = prompt !== "" && prompt !== buildPrompt({ description, features, appType });
+  const isStale = prompt !== null && prompt.build !== buildPrompt({ name, description, features, appType });
 
   // The output sits below the form, so bring it into view the first time it appears.
   // Regenerating afterwards leaves the scroll position alone.
@@ -38,6 +49,7 @@ export function AppBuilder() {
         <div className="grid gap-7 md:grid-cols-2">
           <DescriptionField value={description} onChange={setDescription} />
           <div className="flex flex-col gap-7">
+            <NameField value={name} onChange={setName} />
             <AppTypeSelector value={appType} onChange={setAppType} />
             <FeatureToggles value={features} onChange={setFeatures} />
           </div>
@@ -45,19 +57,39 @@ export function AppBuilder() {
         <div className="mt-7">
           <Button
             size="lg"
-            className="h-12 w-full rounded-2xl bg-linear-to-r from-primary to-violet-500 text-base font-semibold shadow-[0_12px_28px_-12px_var(--primary)] hover:from-primary/90 hover:to-violet-500/90"
-            disabled={!canGenerate}
-            onClick={() => setPrompt(buildPrompt({ description, features, appType }))}
+            className={cn(
+              "h-12 w-full rounded-2xl bg-linear-to-r from-primary to-violet-500 text-base font-semibold hover:from-primary/90 hover:to-violet-500/90",
+              canGenerate ? "shadow-[0_12px_28px_-12px_var(--primary)]" : "opacity-70",
+            )}
+            // Genuinely enabled, never aria-disabled: the click does something useful
+            // when the form is incomplete, and claiming disabled would be a lie to
+            // assistive tech. The hint below is wired up as its description.
+            aria-describedby={canGenerate ? undefined : "generate-hint"}
+            onClick={() => {
+              if (!canGenerate) {
+                document.getElementById(needsName ? "name" : "description")?.focus();
+                return;
+              }
+              setPrompt({
+                setup: buildSetupPrompt(name),
+                build: buildPrompt({ name, description, features, appType }),
+              });
+            }}
           >
             <Sparkles data-icon="inline-start" />
-            {prompt === "" ? "Generate Prompt" : "Regenerate Prompt"}
+            {prompt === null ? "Generate Prompt" : "Regenerate Prompt"}
           </Button>
+          {!canGenerate && (
+            <p id="generate-hint" aria-live="polite" className="mt-2.5 text-center text-xs text-muted-foreground">
+              {missing}
+            </p>
+          )}
         </div>
       </section>
 
-      {prompt !== "" && (
+      {prompt !== null && (
         <div ref={outputRef}>
-          <PromptPreview prompt={prompt} stale={isStale} />
+          <PromptPreview setup={prompt.setup} build={prompt.build} stale={isStale} />
         </div>
       )}
     </div>

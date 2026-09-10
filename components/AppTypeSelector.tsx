@@ -38,8 +38,8 @@ export function AppTypeSelector({ value, onChange }: Props) {
 
   return (
     <div>
-      <div className="mb-3"><StepLabel n={2}>App type</StepLabel></div>
-      <div role="radiogroup" aria-label="App type" className="grid grid-cols-2 gap-2">
+      <div className="mb-3"><StepLabel n={3}>App type</StepLabel></div>
+      <div role="radiogroup" aria-label="App type" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {APP_TYPES.map(({ key, label, stack }, i) => {
           const selected = key === value;
           const Mark = MARKS[key];
@@ -63,10 +63,10 @@ export function AppTypeSelector({ value, onChange }: Props) {
               {/* Brand marks keep their real colours in both states, so they stay recognisable. */}
               <Mark className="size-5 shrink-0 text-foreground" />
               <span className="min-w-0">
-                <span className={cn("block truncate text-sm font-medium", selected ? "text-foreground" : "text-muted-foreground")}>
+                <span className={cn("block text-sm font-medium", selected ? "text-foreground" : "text-muted-foreground")}>
                   {label}
                 </span>
-                <span className="block truncate font-mono text-[11px] text-muted-foreground">{stack}</span>
+                <span className="block font-mono text-[11px] text-muted-foreground">{stack}</span>
               </span>
             </button>
           );

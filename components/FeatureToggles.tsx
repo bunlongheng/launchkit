@@ -26,7 +26,7 @@ const TOGGLES: Toggle[] = [
 export function FeatureToggles({ value, onChange }: Props) {
   return (
     <fieldset>
-      <legend className="mb-3"><StepLabel n={3}>Features</StepLabel></legend>
+      <legend className="mb-3"><StepLabel n={4}>Features</StepLabel></legend>
       <div className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/70 bg-background/60">
         {TOGGLES.map(({ key, label, Icon }) => {
           const on = value[key];

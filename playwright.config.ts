@@ -11,7 +11,15 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "github" : "list",
   use: { baseURL, trace: "on-first-retry" },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // A phone project as well as desktop: a 2 column layout that truncated its labels
+  // at 390px shipped because nothing in CI ever looked at a narrow viewport.
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    // Chromium at iPhone dimensions rather than WebKit: the point is catching layout
+    // and clipping regressions at a narrow viewport, and it keeps CI to 1 browser
+    // download. WebKit also rejects the clipboard permissions this suite grants.
+    { name: "iphone", use: { ...devices["iPhone 14"], browserName: "chromium" } },
+  ],
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : { command: "npm run dev", url: baseURL, reuseExistingServer: !process.env.CI, timeout: 120_000 },

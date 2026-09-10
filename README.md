@@ -2,7 +2,7 @@
 
 Describe an app in a sentence, flip a few toggles, and get a structured Claude Code prompt you can paste straight into a terminal.
 
-![The LaunchKit builder with a filled-in description on the left and the generated prompt on the right](docs/screenshots/hero.png)
+![The LaunchKit builder: the description on the left, app type and feature toggles on the right, and the generated prompt below](docs/screenshots/hero.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/bunlongheng/launchkit/actions/workflows/ci.yml/badge.svg)](https://github.com/bunlongheng/launchkit/actions/workflows/ci.yml)
@@ -21,6 +21,7 @@ Describe an app in a sentence, flip a few toggles, and get a structured Claude C
 - [Configuration](#configuration)
 - [Project layout](#project-layout)
 - [Tests](#tests)
+- [Trademarks](#trademarks)
 - [License](#license)
 
 ## Why
@@ -34,7 +35,14 @@ the 3 or 4 choices that actually vary; it assembles the rest.
 
 ## Features
 
-- Describe the app in up to 500 characters, with a live character counter.
+- Name the app and describe it in up to 4000 characters, with a counter that turns
+  amber at the ceiling rather than silently swallowing a long paste.
+- The output comes in 2 copyable halves, because an agent cannot move itself into a
+  new terminal tab. Step 1 runs where you are: create the repo, add the shell alias
+  derived from the name, open the tab, then stop. Step 2 is the build itself, which
+  you paste into that new tab so its token usage lands on that session.
+- The alias is underscores only, never a dash, since it is used as a shell function
+  name. "Ice Creams" becomes `_ice_creams`.
 - 6 toggles that each change the prompt in a real way: Open Source, Deploy, Public or
   Private, Audit, Onboard Local App and Auth. 5 of them add their own guidance section.
   Everything ships on except Auth, since far from every app needs a login.
@@ -90,7 +98,8 @@ flowchart LR
 
 - Next.js 16 App Router, React 19, TypeScript in strict mode
 - Tailwind CSS v4 with shadcn components built on `@base-ui/react`
-- `lucide-react` icons, Manrope and JetBrains Mono via `next/font`
+- `lucide-react` icons, official brand marks from `simple-icons`, Manrope and
+  JetBrains Mono via `next/font`
 - `node:test` for unit tests, Playwright for the end-to-end flow
 - Hosted on Vercel, with GitHub Actions running every check on push
 
@@ -122,17 +131,18 @@ app/
   page.tsx              # server component: header plus the builder
   layout.tsx            # fonts, metadata, Open Graph, manifest
   manifest.ts           # web app manifest for home-screen install
-  globals.css           # theme tokens and the 2 page animations
+  globals.css           # theme tokens and the page entrance animation
   icon.png              # 512 web icon, also the header mark
   apple-icon.png        # 180 touch icon, flattened for the iOS mask
   opengraph-image.jpg   # 1200x630 share card
 components/
   AppBuilder.tsx        # the only stateful component
   BrandIcons.tsx        # generated: official GitHub, Vercel, Next.js, Chrome, Rust, Swift marks
+  NameField.tsx         # app name, previewing the tab alias it produces
   DescriptionField.tsx  # textarea plus character counter
   FeatureToggles.tsx    # the 6 switches, each with its mark and skill command
   AppTypeSelector.tsx   # 4 app types, each with its mark and implied stack
-  PromptPreview.tsx     # output pane, copy button, staleness pill
+  PromptPreview.tsx     # the 2 output blocks, copy buttons, staleness pill
   StepLabel.tsx         # numbered section heading
   ui/                   # shadcn primitives
 lib/
@@ -155,6 +165,13 @@ npm run test:e2e    # Playwright, boots the dev server itself
 ```
 
 Point `E2E_BASE_URL` at a deployed URL to run the same end-to-end suite against it.
+
+## Trademarks
+
+The GitHub, Vercel, Next.js, Chrome, Rust and Swift marks are trademarks of their
+respective owners. They appear here only to label the technology each option targets,
+and their artwork comes from [simple-icons](https://github.com/simple-icons/simple-icons),
+which releases it under CC0. Their inclusion implies no affiliation or endorsement.
 
 ## License
 

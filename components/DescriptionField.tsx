@@ -1,4 +1,5 @@
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { DESCRIPTION_MAX } from "@/lib/buildPrompt";
 import { StepLabel } from "@/components/StepLabel";
 
@@ -7,7 +8,9 @@ type Props = { value: string; onChange: (v: string) => void };
 export function DescriptionField({ value, onChange }: Props) {
   // A live region on the counter would announce on every keystroke. Only speak up
   // once the limit is close enough to matter.
-  const nearLimit = DESCRIPTION_MAX - value.length <= 50;
+  const remaining = DESCRIPTION_MAX - value.length;
+  const nearLimit = remaining <= 100;
+  const atLimit = remaining === 0;
 
   return (
     // Stretches to the height of the column beside it, so the box is as long as
@@ -15,8 +18,11 @@ export function DescriptionField({ value, onChange }: Props) {
     <div className="flex h-full flex-col">
       <div className="mb-3 flex items-center justify-between">
         <StepLabel n={1} htmlFor="description">What do you want to build?</StepLabel>
-        <span className="text-xs tabular-nums text-muted-foreground" aria-live={nearLimit ? "polite" : "off"}>
-          {value.length}/{DESCRIPTION_MAX}
+        <span
+          className={cn("text-xs tabular-nums", atLimit ? "font-semibold text-amber-700" : "text-muted-foreground")}
+          aria-live={nearLimit ? "polite" : "off"}
+        >
+          {atLimit ? `Limit reached, ${DESCRIPTION_MAX}` : `${value.length}/${DESCRIPTION_MAX}`}
         </span>
       </div>
       <Textarea

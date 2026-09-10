@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+const NAME = "Habit Kit";
 const DESCRIPTION = "A habit tracker with streaks and reminders.";
 
 test("builds, copies and invalidates a prompt", async ({ page, context }) => {
@@ -7,19 +8,30 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await page.goto("/");
 
   const generate = page.getByRole("button", { name: /Generate Prompt/ });
-  const output = page.getByRole("textbox", { name: "Generated prompt" });
+  const output = page.getByRole("textbox", { name: "Paste in the new tab" });
 
   // The output panel is not rendered at all until something has been generated.
-  await expect(generate).toBeDisabled();
+  await expect(page.getByText("Add a name and a description to generate")).toBeVisible();
   await expect(output).toHaveCount(0);
 
+  // Clicking while incomplete must move focus to the field that is missing.
+  await generate.click();
+  await expect(page.getByRole("textbox", { name: "Name your app" })).toBeFocused();
+  await expect(output).toHaveCount(0);
+
+  // Generate needs both a name and a description; a name alone is not enough.
+  await page.getByRole("textbox", { name: "Name your app" }).fill(NAME);
+  await expect(page.getByText("Add a description to generate")).toBeVisible();
+  await generate.click();
+  await expect(page.getByRole("textbox", { name: "What do you want to build?" })).toBeFocused();
   await page.getByRole("textbox", { name: "What do you want to build?" }).fill(DESCRIPTION);
   await expect(generate).toBeEnabled();
 
-  await page.getByRole("switch", { name: "Auth" }).click();
+  await page.getByRole("switch", { name: "Auth", exact: true }).click();
   await generate.click();
 
   await expect(output).toContainText(DESCRIPTION);
+  await expect(output).toContainText("appName = Habit Kit");
   await expect(output).toContainText("App type: Web App");
   await expect(output).toContainText("Stack: Next.js");
   await expect(output).toContainText("Authentication:");
@@ -28,7 +40,12 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await expect(output).toContainText("Skills to run, in order:");
   await expect(output).toContainText("/repo-audit");
 
-  const copy = page.getByRole("button", { name: "Copy" });
+  // Step 1 carries the repo and alias setup; step 2 carries the build.
+  const setup = page.getByRole("textbox", { name: "Run in this tab" });
+  await expect(setup).toContainText("_habit_kit");
+  await expect(setup).toContainText("Do not build anything yet");
+
+  const copy = page.getByRole("button", { name: "Copy" }).last();
   await copy.click();
   await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(await output.inputValue());
@@ -37,7 +54,7 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   // Copy silently hands over text that no longer matches the form.
   const stale = page.getByText("Settings changed - regenerate");
   await expect(stale).toHaveCount(0);
-  await page.getByRole("switch", { name: "Open Source" }).click();
+  await page.getByRole("switch", { name: "Open Source", exact: true }).click();
   await expect(stale).toBeVisible();
 
   await page.getByRole("button", { name: /Regenerate Prompt/ }).click();
@@ -68,11 +85,12 @@ test("a blocked clipboard write is surfaced instead of silently doing nothing", 
   });
   await page.goto("/");
 
+  await page.getByRole("textbox", { name: "Name your app" }).fill(NAME);
   await page.getByRole("textbox", { name: "What do you want to build?" }).fill(DESCRIPTION);
   await page.getByRole("button", { name: /Generate Prompt/ }).click();
-  await page.getByRole("button", { name: "Copy" }).click();
+  await page.getByRole("button", { name: "Copy" }).last().click();
 
-  await expect(page.getByRole("button", { name: "Press Cmd C" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy manually" })).toBeVisible();
   await expect(page.getByText("Copying failed", { exact: false })).toBeAttached();
 
   // The prompt should be selected so it can still be copied by hand.
@@ -81,4 +99,28 @@ test("a blocked clipboard write is surfaced instead of silently doing nothing", 
     return el?.tagName === "TEXTAREA" && el.selectionEnd - el.selectionStart > 0;
   });
   expect(selected).toBe(true);
+});
+
+test("nothing is clipped and the page never scrolls sideways", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("textbox", { name: "What do you want to build?" }).fill(DESCRIPTION);
+  await page.getByRole("textbox", { name: "Name your app" }).fill(NAME);
+  await page.getByRole("button", { name: /Generate Prompt/ }).click();
+  await expect(page.getByRole("textbox", { name: "Paste in the new tab" })).toBeVisible();
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBe(0);
+
+  // Every visible label must fit its box. The app type cards were laid out 2 across
+  // at phone widths and silently truncated to "Chrome Ext...".
+  const clipped = await page.evaluate(() =>
+    [...document.querySelectorAll("main span, main h1, main h2, main label")]
+      .filter((el) => el.children.length === 0 && (el as HTMLElement).offsetParent !== null)
+      .filter((el) => el.scrollWidth > el.clientWidth + 1)
+      .map((el) => (el.textContent || "").trim())
+      .filter(Boolean),
+  );
+  expect(clipped).toEqual([]);
 });
