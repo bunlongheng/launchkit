@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   applicationName: TITLE,
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     url: SITE_URL,

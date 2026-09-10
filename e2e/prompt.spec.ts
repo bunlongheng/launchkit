@@ -50,3 +50,27 @@ test("the stack radiogroup is operable with the arrow keys", async ({ page }) =>
   await expect(page.getByRole("radio", { name: "React / Vite" })).toBeChecked();
   await expect(nextjs).not.toBeChecked();
 });
+
+test("a blocked clipboard write is surfaced instead of silently doing nothing", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: () => Promise.reject(new Error("denied")) },
+    });
+  });
+  await page.goto("/");
+
+  await page.getByRole("textbox", { name: "What do you want to build?" }).fill(DESCRIPTION);
+  await page.getByRole("button", { name: /Generate Prompt/ }).click();
+  await page.getByRole("button", { name: "Copy" }).click();
+
+  await expect(page.getByRole("button", { name: "Press Cmd C" })).toBeVisible();
+  await expect(page.getByText("Copying failed", { exact: false })).toBeAttached();
+
+  // The prompt should be selected so it can still be copied by hand.
+  const selected = await page.evaluate(() => {
+    const el = document.activeElement as HTMLTextAreaElement | null;
+    return el?.tagName === "TEXTAREA" && el.selectionEnd - el.selectionStart > 0;
+  });
+  expect(selected).toBe(true);
+});

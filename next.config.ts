@@ -3,8 +3,8 @@ import type { NextConfig } from "next";
 // Next dev (Turbopack/HMR) evaluates code via eval(); production never does, so
 // 'unsafe-eval' is dev-only. 'unsafe-inline' in script-src is required because
 // Next.js injects inline bootstrap/hydration scripts (a nonce-based CSP would need
-// per-request middleware, which a fully static export cannot use). The app renders
-// no user-supplied HTML, so there is no injection surface for it to protect against.
+// per-request middleware, and that would make every response uncacheable). The app
+// renders no user-supplied HTML, so there is no injection surface for it to protect.
 const isDev = process.env.NODE_ENV !== "production";
 
 const csp = [

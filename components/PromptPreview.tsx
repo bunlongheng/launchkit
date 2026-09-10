@@ -37,7 +37,7 @@ export function PromptPreview({ prompt, stale = false }: Props) {
         <div className="flex flex-wrap items-center gap-2.5">
           <h2 className="text-base font-semibold">Your Claude Code Prompt</h2>
           {stale && (
-            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">
+            <span role="status" className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">
               Settings changed - regenerate
             </span>
           )}
@@ -58,7 +58,7 @@ export function PromptPreview({ prompt, stale = false }: Props) {
         aria-label="Generated prompt"
         value={prompt}
         placeholder="Your prompt will appear here..."
-        className="min-h-[24rem] flex-1 resize-none rounded-2xl border border-border/70 bg-background/60 p-4 font-mono text-[13px] leading-relaxed outline-none placeholder:text-muted-foreground/70 focus-visible:ring-3 focus-visible:ring-ring/50 lg:min-h-0"
+        className="min-h-[24rem] flex-1 resize-none rounded-2xl border border-border/70 bg-background/60 p-4 font-mono text-base leading-relaxed sm:text-[13px] outline-none placeholder:text-muted-foreground/70 focus-visible:ring-3 focus-visible:ring-ring/50 lg:min-h-0"
       />
     </section>
   );

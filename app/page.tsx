@@ -6,8 +6,9 @@ export default function Home() {
   return (
     <main className="ground flex-1 px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-8 sm:py-12">
       <div className="mx-auto w-full max-w-6xl">
-        {/* The icon already has rounded, transparent corners, so it needs no extra radius. */}
-        <header className="rise mb-8 flex items-center gap-4 sm:mb-10">
+        {/* Deliberately not animated in: if every element starts at opacity 0 the first
+            frame paints nothing, and the browser never reports FCP or LCP. */}
+        <header className="mb-8 flex items-center gap-4 sm:mb-10">
           <Image
             src={icon}
             alt=""
