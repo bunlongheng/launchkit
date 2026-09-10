@@ -33,11 +33,15 @@ test("conditional sections appear only when enabled", () => {
   assert.doesNotMatch(off, /^Audit:$/m);
   assert.doesNotMatch(off, /^Onboard local app:$/m);
   assert.doesNotMatch(off, /^Deploy:$/m);
+  assert.doesNotMatch(off, /^Authentication:$/m);
+  assert.doesNotMatch(off, /^Open source:$/m);
 
   const on = buildPrompt({ description: "x", features: all(true), stack: "nextjs" });
   assert.match(on, /^Audit:\n- Review security/m);
   assert.match(on, /^Onboard local app:\n- Inspect the existing repository first/m);
   assert.match(on, /^Deploy:\n- Add production-ready deployment configuration/m);
+  assert.match(on, /^Authentication:\n- Add authentication with secure, httpOnly session cookies/m);
+  assert.match(on, /^Open source:\n- Add an MIT LICENSE file/m);
 });
 
 test("always ends with before/after coding steps", () => {
@@ -48,4 +52,30 @@ test("always ends with before/after coding steps", () => {
 
 test("stack labels cover every stack", () => {
   assert.deepEqual(Object.keys(STACK_LABELS).sort(), ["nextjs", "other", "vite"]);
+});
+
+test("each guidance section is driven by its own toggle alone", () => {
+  const SECTIONS: [keyof Features, RegExp][] = [
+    ["audit", /^Audit:$/m],
+    ["onboard", /^Onboard local app:$/m],
+    ["auth", /^Authentication:$/m],
+    ["deploy", /^Deploy:$/m],
+    ["openSource", /^Open source:$/m],
+  ];
+
+  for (const [key, heading] of SECTIONS) {
+    const only = buildPrompt({
+      description: "x",
+      features: { ...all(false), [key]: true },
+      stack: "nextjs",
+    });
+    assert.match(only, heading, `${key} on should emit its section`);
+
+    const without = buildPrompt({
+      description: "x",
+      features: { ...all(true), [key]: false },
+      stack: "nextjs",
+    });
+    assert.doesNotMatch(without, heading, `${key} off should drop its section`);
+  }
 });

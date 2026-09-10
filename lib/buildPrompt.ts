@@ -64,6 +64,19 @@ const ONBOARD = [
   "Do not rewrite working parts unnecessarily",
 ];
 
+const AUTH = [
+  "Add authentication with secure, httpOnly session cookies",
+  "Hash and salt any stored credentials",
+  "Protect every non-public route and API handler on the server, not just in the UI",
+  "Keep secrets and tokens out of client-side code",
+];
+
+const OPEN_SOURCE = [
+  "Add an MIT LICENSE file",
+  "Write a README covering setup, usage and project layout",
+  "Document every required environment variable and keep real values out of the repository",
+];
+
 const DEPLOY = [
   "Add production-ready deployment configuration",
   "Include required environment variables",
@@ -106,7 +119,9 @@ export function buildPrompt({ description, features, stack }: PromptInput): stri
 
   if (features.audit) sections.push(`Audit:\n${bullets(AUDIT)}`);
   if (features.onboard) sections.push(`Onboard local app:\n${bullets(ONBOARD)}`);
+  if (features.auth) sections.push(`Authentication:\n${bullets(AUTH)}`);
   if (features.deploy) sections.push(`Deploy:\n${bullets(DEPLOY)}`);
+  if (features.openSource) sections.push(`Open source:\n${bullets(OPEN_SOURCE)}`);
 
   sections.push(`Before coding:\n${numbered(BEFORE)}`, `After coding:\n${bullets(AFTER)}`);
 
