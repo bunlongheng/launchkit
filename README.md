@@ -36,8 +36,14 @@ the 3 or 4 choices that actually vary; it assembles the rest.
 
 - Describe the app in up to 500 characters, with a live character counter.
 - 6 toggles that each change the prompt in a real way: Open Source, Deploy, Public or
-  Private, Auth, Audit and Onboard Local App. 5 of them add their own guidance section.
-- Pick a target stack: Next.js, React with Vite, or Other.
+  Private, Audit, Onboard Local App and Auth. 5 of them add their own guidance section.
+  Everything ships on except Auth, since far from every app needs a login.
+- 4 of those toggles map to a real Claude Code skill, shown on the switch and emitted
+  as a numbered run order at the end of the prompt: `/onboard`, `/repo-audit`,
+  `/repo-public-audit` and `/repo-open-source-audit`.
+- Pick a target stack: Next.js, shown with its logo, or Other.
+- The output pane stays out of the way until you generate, then reveals below the form
+  and scrolls itself into view.
 - Read the assembled prompt in a monospace pane and copy it with 1 click.
 - Change a setting after generating and the pane flags itself as out of date, so you
   never copy a prompt that no longer matches the form.
@@ -121,9 +127,10 @@ app/
   opengraph-image.jpg   # 1200x630 share card
 components/
   AppBuilder.tsx        # the only stateful component
+  BrandIcons.tsx        # inline GitHub, Vercel, local-apps and Next.js marks
   DescriptionField.tsx  # textarea plus character counter
-  FeatureToggles.tsx    # the 6 switches
-  TechStackSelector.tsx # radiogroup with arrow-key navigation
+  FeatureToggles.tsx    # the 6 switches, each with its mark and skill command
+  TechStackSelector.tsx # radiogroup with arrow-key navigation and the Next.js mark
   PromptPreview.tsx     # output pane, copy button, staleness pill
   StepLabel.tsx         # numbered section heading
   ui/                   # shadcn primitives
