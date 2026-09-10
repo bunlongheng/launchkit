@@ -22,5 +22,12 @@ export default defineConfig({
   ],
   webServer: process.env.E2E_BASE_URL
     ? undefined
-    : { command: "npm run dev", url: baseURL, reuseExistingServer: !process.env.CI, timeout: 120_000 },
+    : {
+        // In CI, exercise the built output rather than the dev server, otherwise
+        // nothing ever loads the bundle that actually ships.
+        command: process.env.CI ? "npm run start" : "npm run dev",
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 });

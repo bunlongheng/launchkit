@@ -30,6 +30,20 @@ export function AppBuilder() {
   const [prompt, setPrompt] = useState<{ setup: string; build: string } | null>(null);
   const [attempts, setAttempts] = useState(0);
   const outputRef = useRef<HTMLDivElement>(null);
+
+  const generate = () => {
+    if (!canGenerate) {
+      setAttempts((n) => n + 1);
+      // After the commit, otherwise the re-render that turns on the error border
+      // rewrites className and wipes the class we just added.
+      requestAnimationFrame(() => nudge(needsName ? "name" : "description"));
+      return;
+    }
+    setPrompt({
+      setup: buildSetupPrompt(name, features.isPublic),
+      build: buildPrompt({ name, description, features, appType }),
+    });
+  };
   const revealed = useRef(false);
 
   const needsName = name.trim().length === 0;
@@ -57,7 +71,12 @@ export function AppBuilder() {
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="rise rounded-3xl border border-border/70 bg-white/80 p-5 shadow-[0_1px_2px_rgb(0_0_0/0.03),0_24px_48px_-32px_rgb(30_27_75/0.25)] backdrop-blur sm:p-7 [animation-delay:60ms]">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          generate();
+        }}
+        className="rise rounded-3xl border border-border/70 bg-white/80 p-5 shadow-[0_1px_2px_rgb(0_0_0/0.03),0_24px_48px_-32px_rgb(30_27_75/0.25)] backdrop-blur sm:p-7 [animation-delay:60ms]">
         <div className="grid gap-7 md:grid-cols-2">
           <DescriptionField
             value={description}
@@ -76,25 +95,14 @@ export function AppBuilder() {
         </div>
         <div className="mt-7">
           <Button
+            type="submit"
             size="lg"
             className="h-12 w-full rounded-2xl bg-linear-to-r from-primary to-violet-500 text-base font-semibold shadow-[0_12px_28px_-12px_var(--primary)] hover:from-primary/90 hover:to-violet-500/90"
             // Genuinely enabled, never aria-disabled: the click does something useful
             // when the form is incomplete, and claiming disabled would be a lie to
             // assistive tech. The hint below is wired up as its description.
             aria-describedby={canGenerate ? undefined : "generate-hint"}
-            onClick={() => {
-              if (!canGenerate) {
-                setAttempts((n) => n + 1);
-                // After the commit, otherwise the re-render that turns on the error
-                // border rewrites className and wipes the class we just added.
-                requestAnimationFrame(() => nudge(needsName ? "name" : "description"));
-                return;
-              }
-              setPrompt({
-                setup: buildSetupPrompt(name),
-                build: buildPrompt({ name, description, features, appType }),
-              });
-            }}
+
           >
             <Sparkles data-icon="inline-start" />
             {prompt === null ? "Generate Prompt" : "Regenerate Prompt"}
@@ -105,7 +113,7 @@ export function AppBuilder() {
             </p>
           )}
         </div>
-      </section>
+      </form>
 
       {prompt !== null && (
         <div ref={outputRef}>

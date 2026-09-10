@@ -87,7 +87,7 @@ const AUDIT = [
 
 const ONBOARD = [
   "Register the app in the local apps dashboard with its port, repo and start command",
-  "Add its tab colour and shell alias so it gets a dedicated terminal tab",
+  "Give it a tab colour and icon to match the alias that already exists",
   "Link the project to its deployment target",
   "Generate the app icon and a baseline screenshot",
 ];
@@ -100,7 +100,7 @@ const AUTH = [
 ];
 
 const OPEN_SOURCE = [
-  "Publish the repository on GitHub",
+  "Make the existing repository public once it is safe to",
   "Add an MIT LICENSE file",
   "Write a README covering setup, usage and project layout",
   "Document every required environment variable and keep real values out of the repository",
@@ -139,13 +139,13 @@ export const aliasFor = (name: string) =>
   `_${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "")}`;
 
 /** Step 1. Run in the current tab, then stop and hand off. */
-export function buildSetupPrompt(name: string): string {
+export function buildSetupPrompt(name: string, isPublic: boolean): string {
   const alias = aliasFor(name);
   return [
     `appName = ${name.trim()}`,
     `Set up a new project for me. Do this part only.`,
     numbered([
-      "Create a new GitHub repo for it.",
+      `Create a new ${isPublic ? "public" : "private"} GitHub repo for it.`,
       `Add a shell function \`${alias}\` to my Claude tab aliases file, following the pattern already in there, so it opens a terminal tab for \`${slugify(name)}\`. Register the tab colour and icon alongside it if that file's convention has them.`,
       `Open a NEW terminal tab and run \`${alias}\` to confirm it works. It will not resolve in this shell until the aliases file is re-sourced, which a new tab does for you.`,
     ]),

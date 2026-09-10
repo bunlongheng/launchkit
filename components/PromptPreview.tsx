@@ -8,11 +8,12 @@ type Props = { setup: string; build: string; stale?: boolean };
 
 type CopyState = "idle" | "copied" | "failed";
 
-function PromptBlock({ id, step, title, hint, text, rows }: {
+function PromptBlock({ id, step, title, hint, copyLabel, text, rows }: {
   id: string;
   step: number;
   title: string;
   hint: string;
+  copyLabel: string;
   text: string;
   rows: string;
 }) {
@@ -50,7 +51,7 @@ function PromptBlock({ id, step, title, hint, text, rows }: {
             <span className="block text-xs text-muted-foreground">{hint}</span>
           </span>
         </div>
-        <Button variant="outline" size="sm" className="rounded-xl" onClick={copy} aria-describedby={id}>
+        <Button variant="outline" size="sm" className="rounded-xl" onClick={copy} aria-label={copyLabel}>
           {status === "copied" && <Check data-icon="inline-start" className="text-emerald-600" />}
           {status === "failed" && <TriangleAlert data-icon="inline-start" className="text-amber-600" />}
           {status === "idle" && <Copy data-icon="inline-start" />}
@@ -89,6 +90,7 @@ export function PromptPreview({ setup, build, stale = false }: Props) {
         step={1}
         title="Run in this tab"
         hint="Creates the repo and the tab alias, then stops."
+        copyLabel="Copy the setup prompt"
         text={setup}
         rows="min-h-44"
       />
@@ -97,6 +99,7 @@ export function PromptPreview({ setup, build, stale = false }: Props) {
         step={2}
         title="Paste in the new tab"
         hint="The build itself, so its token usage lands on that session."
+        copyLabel="Copy the build prompt"
         text={build}
         rows="min-h-[26rem]"
       />

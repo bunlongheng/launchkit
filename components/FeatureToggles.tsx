@@ -24,6 +24,15 @@ const TOGGLES: Toggle[] = [
 ];
 
 export function FeatureToggles({ value, onChange }: Props) {
+  // Open source and private contradict each other, and the generated prompt used to
+  // ask for both at once. Keep the pair coherent as the switches are flipped.
+  const update = (key: keyof Features, next: boolean) => {
+    const updated = { ...value, [key]: next };
+    if (key === "openSource" && next) updated.isPublic = true;
+    if (key === "isPublic" && !next) updated.openSource = false;
+    onChange(updated);
+  };
+
   return (
     <fieldset>
       <legend className="mb-3"><StepLabel n={4}>Features</StepLabel></legend>
@@ -50,7 +59,7 @@ export function FeatureToggles({ value, onChange }: Props) {
                   </span>
                 )}
               </span>
-              <Switch checked={on} aria-describedby={skillId} onCheckedChange={(next) => onChange({ ...value, [key]: next })} />
+              <Switch checked={on} aria-describedby={skillId} onCheckedChange={(next) => update(key, next)} />
             </label>
           );
         })}

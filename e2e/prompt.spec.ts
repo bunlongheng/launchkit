@@ -47,9 +47,9 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await expect(setup).toContainText("_habit_kit");
   await expect(setup).toContainText("Do not build anything yet");
 
-  const copy = page.getByRole("button", { name: "Copy" }).last();
+  const copy = page.getByRole("button", { name: "Copy the build prompt" });
   await copy.click();
-  await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();
+  await expect(copy).toContainText("Copied");
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(await output.inputValue());
 
   // Changing a setting must flag the on-screen prompt as out of date, otherwise
@@ -90,9 +90,9 @@ test("a blocked clipboard write is surfaced instead of silently doing nothing", 
   await page.getByRole("textbox", { name: "Name your app" }).fill(NAME);
   await page.getByRole("textbox", { name: "What do you want to build?" }).fill(DESCRIPTION);
   await page.getByRole("button", { name: /Generate Prompt/ }).click();
-  await page.getByRole("button", { name: "Copy" }).last().click();
+  await page.getByRole("button", { name: "Copy the build prompt" }).click();
 
-  await expect(page.getByRole("button", { name: "Copy manually" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy the build prompt" })).toContainText("Copy manually");
   await expect(page.getByText("Copying failed", { exact: false })).toBeAttached();
 
   // The prompt should be selected so it can still be copied by hand.

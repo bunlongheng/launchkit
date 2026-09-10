@@ -8,9 +8,9 @@ const all = (v: boolean): Features => ({
 });
 
 test("the setup prompt names the alias and stops before building", () => {
-  const out = buildSetupPrompt("  Ice Creams  ");
+  const out = buildSetupPrompt("  Ice Creams  ", false);
   assert.ok(out.startsWith("appName = Ice Creams"), "the name leads, trimmed");
-  assert.match(out, /Create a new GitHub repo for it\./);
+  assert.match(out, /Create a new private GitHub repo for it\./);
   // The alias must be identical in the step that creates it and the step that runs it.
   assert.match(out, /Add a shell function `_ice_creams` to my Claude tab aliases file/);
   assert.match(out, /Open a NEW terminal tab and run `_ice_creams`/);
@@ -33,7 +33,7 @@ test("the build prompt leads with the name, then the trimmed description", () =>
   assert.ok(out.startsWith("appName = Ice Creams"));
   assert.match(out, /Build the following application:\n\nA habit tracker/);
   // The bootstrap belongs to step 1 only; repeating it here would re-run the setup.
-  assert.doesNotMatch(out, /Create a new GitHub repo for it\./);
+  assert.doesNotMatch(out, /Create a new .* GitHub repo for it/);
 });
 
 test("maps every option to Yes/No and Public/Private", () => {
@@ -67,7 +67,7 @@ test("conditional sections appear only when enabled", () => {
   assert.match(on, /^Onboard local app:\n- Register the app in the local apps dashboard/m);
   assert.match(on, /^Deploy:\n- Add production-ready deployment configuration for Vercel/m);
   assert.match(on, /^Authentication:\n- Add authentication with secure, httpOnly session cookies/m);
-  assert.match(on, /^Open source:\n- Publish the repository on GitHub/m);
+  assert.match(on, /^Open source:\n- Make the existing repository public/m);
 });
 
 test("always includes the before and after coding steps", () => {
@@ -128,4 +128,17 @@ test("each guidance section is driven by its own toggle alone", () => {
     });
     assert.doesNotMatch(without, heading, `${key} off should drop its section`);
   }
+});
+
+test("visibility follows the repo the setup step actually creates", () => {
+  assert.match(buildSetupPrompt("Ice Creams", true), /Create a new public GitHub repo/);
+  assert.match(buildSetupPrompt("Ice Creams", false), /Create a new private GitHub repo/);
+});
+
+test("the build prompt never asks to redo the setup step", () => {
+  const out = buildPrompt({ name: "Ice Creams", description: "x", features: all(true), appType: "web" });
+  // Step 1 already made the repo and the alias; repeating either would duplicate work.
+  assert.doesNotMatch(out, /Create a new .* GitHub repo/);
+  assert.doesNotMatch(out, /Publish the repository on GitHub/);
+  assert.doesNotMatch(out, /shell alias/);
 });

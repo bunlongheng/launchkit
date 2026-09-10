@@ -17,7 +17,7 @@ export function NameField({ value, onChange, invalid = false }: Props) {
         {alias && (
           // Shows the tab alias the prompt will tell the agent to create, so the
           // name and the alias never drift apart in the user's head.
-          <span className="truncate font-mono text-[11px] text-muted-foreground" aria-live="polite">
+          <span className="truncate font-mono text-[11px] text-muted-foreground">
             {alias}
           </span>
         )}

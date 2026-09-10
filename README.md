@@ -65,24 +65,31 @@ the 3 or 4 choices that actually vary; it assembles the rest.
 ## Architecture
 
 3 layers, and the dependency only ever points downward. The page is a server component
-that renders 1 stateful client component; that component owns the form state and calls a
-pure function to turn it into text. There is no server code, no database and no network
+that renders 1 stateful client component; that component owns the form state and calls 2
+pure functions to turn it into text. There is no server code, no database and no network
 call at runtime, so the whole site prerenders to static files.
+
+The output is split in 2 because an agent cannot move itself into a new terminal tab.
+The name alone drives the setup half; everything drives the build half.
 
 ```mermaid
 flowchart LR
-    D[Description] --> B
-    T[6 feature toggles] --> B
-    S[App type] --> B
-    B["buildPrompt()"] --> P[Prompt text]
-    P --> C[Clipboard]
+    N[App name] --> S1["buildSetupPrompt()"]
+    N --> S2
+    D[Description] --> S2
+    T[6 feature toggles] --> S2
+    A[App type] --> S2["buildPrompt()"]
+    S1 --> P1[Step 1: repo and tab alias]
+    S2 --> P2[Step 2: the build]
+    P1 --> C[Clipboard]
+    P2 --> C
 ```
 
 | Layer | Lives in | Responsibility |
 |-------|----------|----------------|
 | Page | `app/` | Metadata, fonts, icons, manifest, and the static shell |
 | UI | `components/` | Form state, rendering, accessibility |
-| Domain | `lib/buildPrompt.ts` | Turning settings into prompt text. Pure, no DOM |
+| Domain | `lib/buildPrompt.ts` | Turning settings into the 2 prompts. Pure, no DOM |
 
 ## Design decisions and trade-offs
 
