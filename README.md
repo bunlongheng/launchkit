@@ -128,7 +128,7 @@ app/
   opengraph-image.jpg   # 1200x630 share card
 components/
   AppBuilder.tsx        # the only stateful component
-  BrandIcons.tsx        # inline GitHub, Vercel, local-apps, Chrome, Apple, Next.js marks
+  BrandIcons.tsx        # generated: official GitHub, Vercel, Next.js, Chrome, Rust, Swift marks
   DescriptionField.tsx  # textarea plus character counter
   FeatureToggles.tsx    # the 6 switches, each with its mark and skill command
   AppTypeSelector.tsx   # 4 app types, each with its mark and implied stack
@@ -137,6 +137,8 @@ components/
   ui/                   # shadcn primitives
 lib/
   buildPrompt.ts        # the entire domain: settings in, prompt out
+scripts/
+  brand-icons.mjs       # regenerates BrandIcons.tsx from simple-icons
 tests/
   buildPrompt.test.ts   # unit coverage of the prompt rules
 e2e/

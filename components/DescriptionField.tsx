@@ -10,7 +10,9 @@ export function DescriptionField({ value, onChange }: Props) {
   const nearLimit = DESCRIPTION_MAX - value.length <= 50;
 
   return (
-    <div>
+    // Stretches to the height of the column beside it, so the box is as long as
+    // the app type and features stack put together.
+    <div className="flex h-full flex-col">
       <div className="mb-3 flex items-center justify-between">
         <StepLabel n={1} htmlFor="description">What do you want to build?</StepLabel>
         <span className="text-xs tabular-nums text-muted-foreground" aria-live={nearLimit ? "polite" : "off"}>
@@ -23,7 +25,7 @@ export function DescriptionField({ value, onChange }: Props) {
         maxLength={DESCRIPTION_MAX}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Describe what you want to build..."
-        className="min-h-36 resize-none rounded-2xl bg-background/60 px-4 py-3 text-base leading-relaxed md:text-base"
+        className="min-h-36 flex-1 resize-none rounded-2xl bg-background/60 px-4 py-3 text-base leading-relaxed md:text-base"
       />
     </div>
   );

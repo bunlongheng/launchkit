@@ -1,7 +1,6 @@
 import { useRef, type ComponentType, type KeyboardEvent } from "react";
-import { SquareTerminal } from "lucide-react";
 import { StepLabel } from "@/components/StepLabel";
-import { AppleMark, ChromeMark, NextMark } from "@/components/BrandIcons";
+import { ChromeMark, NextMark, RustMark, SwiftMark } from "@/components/BrandIcons";
 import { APP_TYPES, type AppType } from "@/lib/buildPrompt";
 import { cn } from "@/lib/utils";
 
@@ -10,8 +9,8 @@ type Props = { value: AppType; onChange: (v: AppType) => void };
 const MARKS: Record<AppType, ComponentType<{ className?: string }>> = {
   web: NextMark,
   chrome: ChromeMark,
-  tui: SquareTerminal,
-  native: AppleMark,
+  tui: RustMark,
+  native: SwiftMark,
 };
 
 export function AppTypeSelector({ value, onChange }: Props) {
@@ -54,9 +53,6 @@ export function AppTypeSelector({ value, onChange }: Props) {
               tabIndex={selected ? 0 : -1}
               onClick={() => onChange(key)}
               onKeyDown={onKeyDown}
-              // The Next.js mark punches its highlights out in the surface colour,
-              // so it stays legible on both the selected and unselected background.
-              style={{ "--nextjs-ink": selected ? "var(--primary)" : "var(--background)" } as React.CSSProperties}
               className={cn(
                 "flex items-center gap-2.5 rounded-2xl border px-3 py-2.5 text-left transition-all outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
                 selected
@@ -64,7 +60,8 @@ export function AppTypeSelector({ value, onChange }: Props) {
                   : "border-border/70 bg-background/60 hover:bg-primary/[0.03]",
               )}
             >
-              <Mark className={cn("size-5 shrink-0", selected ? "text-foreground" : "text-muted-foreground")} />
+              {/* Brand marks keep their real colours in both states, so they stay recognisable. */}
+              <Mark className="size-5 shrink-0 text-foreground" />
               <span className="min-w-0">
                 <span className={cn("block truncate text-sm font-medium", selected ? "text-foreground" : "text-muted-foreground")}>
                   {label}
