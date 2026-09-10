@@ -41,7 +41,8 @@ the 3 or 4 choices that actually vary; it assembles the rest.
 - 4 of those toggles map to a real Claude Code skill, shown on the switch and emitted
   as a numbered run order at the end of the prompt: `/onboard`, `/repo-audit`,
   `/repo-public-audit` and `/repo-open-source-audit`.
-- Pick a target stack: Next.js, shown with its logo, or Other.
+- Pick an app type and the stack comes with it: Web App on Next.js, Chrome Extension
+  on TypeScript and MV3, TUI on Rust, Native on Swift. Each carries its own mark.
 - The output pane stays out of the way until you generate, then reveals below the form
   and scrolls itself into view.
 - Read the assembled prompt in a monospace pane and copy it with 1 click.
@@ -64,7 +65,7 @@ call at runtime, so the whole site prerenders to static files.
 flowchart LR
     D[Description] --> B
     T[6 feature toggles] --> B
-    S[Stack choice] --> B
+    S[App type] --> B
     B["buildPrompt()"] --> P[Prompt text]
     P --> C[Clipboard]
 ```
@@ -127,10 +128,10 @@ app/
   opengraph-image.jpg   # 1200x630 share card
 components/
   AppBuilder.tsx        # the only stateful component
-  BrandIcons.tsx        # inline GitHub, Vercel, local-apps and Next.js marks
+  BrandIcons.tsx        # inline GitHub, Vercel, local-apps, Chrome, Apple, Next.js marks
   DescriptionField.tsx  # textarea plus character counter
   FeatureToggles.tsx    # the 6 switches, each with its mark and skill command
-  TechStackSelector.tsx # radiogroup with arrow-key navigation and the Next.js mark
+  AppTypeSelector.tsx   # 4 app types, each with its mark and implied stack
   PromptPreview.tsx     # output pane, copy button, staleness pill
   StepLabel.tsx         # numbered section heading
   ui/                   # shadcn primitives

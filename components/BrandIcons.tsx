@@ -35,7 +35,27 @@ export function LocalAppsMark({ className = base }: Props) {
   );
 }
 
-// Full-colour brand mark, used once at a larger size in the stack selector.
+export function ChromeMark({ className = base }: Props) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable="false">
+      <path fill="#EA4335" d="M12 2a10 10 0 0 1 8.66 5H12a5 5 0 0 0-4.33 2.5L3.34 6.34A9.98 9.98 0 0 1 12 2Z" />
+      <path fill="#FBBC05" d="M3.34 6.34 7.67 9.5a5 5 0 0 0 0 5L3.34 17.66a9.98 9.98 0 0 1 0-11.32Z" />
+      <path fill="#34A853" d="M3.34 17.66 7.67 14.5A5 5 0 0 0 12 17h8.66A10 10 0 0 1 3.34 17.66Z" />
+      <circle cx="12" cy="12" r="5" fill="#fff" />
+      <circle cx="12" cy="12" r="3.9" fill="#4285F4" />
+    </svg>
+  );
+}
+
+export function AppleMark({ className = base }: Props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden focusable="false">
+      <path d="M17.05 12.54c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.83-.81-3.01-.79-1.55.02-2.98.9-3.78 2.29-1.61 2.79-.41 6.92 1.16 9.19.77 1.11 1.68 2.35 2.88 2.31 1.16-.05 1.6-.75 3-.75s1.79.75 3.01.72c1.24-.02 2.03-1.13 2.79-2.24.88-1.28 1.24-2.53 1.26-2.59-.03-.01-2.42-.93-2.44-3.68M14.9 5.6c.64-.77 1.07-1.85.95-2.92-.92.04-2.03.61-2.69 1.38-.59.68-1.11 1.78-.97 2.83 1.03.08 2.07-.52 2.71-1.29" />
+    </svg>
+  );
+}
+
+// Full-colour brand mark, used once at a larger size in the app type selector.
 export function NextMark({ className = "size-4 shrink-0" }: Props) {
   return (
     <svg viewBox="0 0 180 180" className={className} aria-hidden focusable="false">

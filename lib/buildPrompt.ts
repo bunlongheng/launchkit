@@ -1,4 +1,4 @@
-export type Stack = "nextjs" | "other";
+export type AppType = "web" | "chrome" | "tui" | "native";
 
 export type Features = {
   openSource: boolean;
@@ -12,15 +12,20 @@ export type Features = {
 export type PromptInput = {
   description: string;
   features: Features;
-  stack: Stack;
+  appType: AppType;
 };
 
 export const DESCRIPTION_MAX = 500;
 
-export const STACK_LABELS: Record<Stack, string> = {
-  nextjs: "Next.js",
-  other: "Other",
-};
+// The app type decides the stack, so there is nothing separate to pick.
+export const APP_TYPES: { key: AppType; label: string; stack: string }[] = [
+  { key: "web", label: "Web App", stack: "Next.js" },
+  { key: "chrome", label: "Chrome Extension", stack: "TypeScript, MV3" },
+  { key: "tui", label: "TUI", stack: "Rust" },
+  { key: "native", label: "Native", stack: "Swift" },
+];
+
+export const appTypeFor = (key: AppType) => APP_TYPES.find((a) => a.key === key)!;
 
 // Everything on by default except auth: most apps want the full ship pipeline, and
 // far from every app needs a login.
@@ -118,7 +123,7 @@ const bullets = (items: string[]) => items.map((i) => `- ${i}`).join("\n");
 const numbered = (items: string[]) =>
   items.map((i, n) => `${n + 1}. ${i}`).join("\n");
 
-export function buildPrompt({ description, features, stack }: PromptInput): string {
+export function buildPrompt({ description, features, appType }: PromptInput): string {
   const sections: string[] = [
     `Build the following application:\n\n${description.trim()}`,
     `Configuration:\n${bullets([
@@ -128,7 +133,8 @@ export function buildPrompt({ description, features, stack }: PromptInput): stri
       `Authentication: ${yesNo(features.auth)}`,
       `Audit: ${yesNo(features.audit)}`,
       `Onboard existing local app: ${yesNo(features.onboard)}`,
-      `Stack: ${STACK_LABELS[stack]}`,
+      `App type: ${appTypeFor(appType).label}`,
+      `Stack: ${appTypeFor(appType).stack}`,
     ])}`,
     `Requirements:\n${bullets(REQUIREMENTS)}`,
   ];

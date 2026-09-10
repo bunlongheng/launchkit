@@ -20,6 +20,7 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await generate.click();
 
   await expect(output).toContainText(DESCRIPTION);
+  await expect(output).toContainText("App type: Web App");
   await expect(output).toContainText("Stack: Next.js");
   await expect(output).toContainText("Authentication:");
   // Audit ships on by default, so its section and skill appear without being touched.
@@ -44,15 +45,18 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await expect(output).not.toContainText("/repo-open-source-audit");
 });
 
-test("the stack radiogroup is operable with the arrow keys", async ({ page }) => {
+test("the app type radiogroup is operable with the arrow keys", async ({ page }) => {
   await page.goto("/");
-  const nextjs = page.getByRole("radio", { name: "Next.js" });
-  await expect(nextjs).toBeChecked();
+  const web = page.getByRole("radio", { name: /Web App/ });
+  await expect(web).toBeChecked();
 
-  await nextjs.focus();
+  await web.focus();
   await page.keyboard.press("ArrowRight");
-  await expect(page.getByRole("radio", { name: "Other" })).toBeChecked();
-  await expect(nextjs).not.toBeChecked();
+  await expect(page.getByRole("radio", { name: /Chrome Extension/ })).toBeChecked();
+  await expect(web).not.toBeChecked();
+
+  await page.keyboard.press("ArrowLeft");
+  await expect(web).toBeChecked();
 });
 
 test("a blocked clipboard write is surfaced instead of silently doing nothing", async ({ page }) => {

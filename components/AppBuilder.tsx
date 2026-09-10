@@ -5,14 +5,14 @@ import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DescriptionField } from "@/components/DescriptionField";
 import { FeatureToggles } from "@/components/FeatureToggles";
-import { TechStackSelector } from "@/components/TechStackSelector";
+import { AppTypeSelector } from "@/components/AppTypeSelector";
 import { PromptPreview } from "@/components/PromptPreview";
-import { buildPrompt, DEFAULT_FEATURES, type Features, type Stack } from "@/lib/buildPrompt";
+import { buildPrompt, DEFAULT_FEATURES, type AppType, type Features } from "@/lib/buildPrompt";
 
 export function AppBuilder() {
   const [description, setDescription] = useState("");
   const [features, setFeatures] = useState<Features>(DEFAULT_FEATURES);
-  const [stack, setStack] = useState<Stack>("nextjs");
+  const [appType, setAppType] = useState<AppType>("web");
   const [prompt, setPrompt] = useState("");
   const outputRef = useRef<HTMLDivElement>(null);
   const revealed = useRef(false);
@@ -21,7 +21,7 @@ export function AppBuilder() {
   // buildPrompt is a pure string join, so recomputing it every render is cheaper
   // than tracking a snapshot of the inputs. It is only used to tell whether what
   // is on screen still matches the current settings.
-  const isStale = prompt !== "" && prompt !== buildPrompt({ description, features, stack });
+  const isStale = prompt !== "" && prompt !== buildPrompt({ description, features, appType });
 
   // The output sits below the form, so bring it into view the first time it appears.
   // Regenerating afterwards leaves the scroll position alone.
@@ -38,7 +38,7 @@ export function AppBuilder() {
         <div className="grid gap-7 md:grid-cols-2">
           <div className="flex flex-col gap-7">
             <DescriptionField value={description} onChange={setDescription} />
-            <TechStackSelector value={stack} onChange={setStack} />
+            <AppTypeSelector value={appType} onChange={setAppType} />
           </div>
           <FeatureToggles value={features} onChange={setFeatures} />
         </div>
@@ -47,7 +47,7 @@ export function AppBuilder() {
             size="lg"
             className="h-12 w-full rounded-2xl bg-linear-to-r from-primary to-violet-500 text-base font-semibold shadow-[0_12px_28px_-12px_var(--primary)] hover:from-primary/90 hover:to-violet-500/90"
             disabled={!canGenerate}
-            onClick={() => setPrompt(buildPrompt({ description, features, stack }))}
+            onClick={() => setPrompt(buildPrompt({ description, features, appType }))}
           >
             <Sparkles data-icon="inline-start" />
             {prompt === "" ? "Generate Prompt" : "Regenerate Prompt"}
