@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { DescriptionField } from "@/components/DescriptionField";
 import { NameField } from "@/components/NameField";
 import { FeatureToggles } from "@/components/FeatureToggles";
@@ -57,10 +56,7 @@ export function AppBuilder() {
         <div className="mt-7">
           <Button
             size="lg"
-            className={cn(
-              "h-12 w-full rounded-2xl bg-linear-to-r from-primary to-violet-500 text-base font-semibold hover:from-primary/90 hover:to-violet-500/90",
-              canGenerate ? "shadow-[0_12px_28px_-12px_var(--primary)]" : "opacity-70",
-            )}
+            className="h-12 w-full rounded-2xl bg-linear-to-r from-primary to-violet-500 text-base font-semibold shadow-[0_12px_28px_-12px_var(--primary)] hover:from-primary/90 hover:to-violet-500/90"
             // Genuinely enabled, never aria-disabled: the click does something useful
             // when the form is incomplete, and claiming disabled would be a lie to
             // assistive tech. The hint below is wired up as its description.
