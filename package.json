@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start -p 3046",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "prepare": "husky || true",
     "test:e2e": "playwright test"
