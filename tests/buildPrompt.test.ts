@@ -22,10 +22,10 @@ test("maps every option to Yes/No and Public/Private", () => {
   assert.match(off, /Onboard existing local app: No/);
   assert.match(off, /Stack: Other/);
 
-  const on = buildPrompt({ description: "x", features: all(true), stack: "vite" });
+  const on = buildPrompt({ description: "x", features: all(true), stack: "nextjs" });
   assert.match(on, /Open source: Yes/);
   assert.match(on, /Visibility: Public/);
-  assert.match(on, /Stack: React \/ Vite/);
+  assert.match(on, /Stack: Next\.js/);
 });
 
 test("conditional sections appear only when enabled", () => {
@@ -44,14 +44,36 @@ test("conditional sections appear only when enabled", () => {
   assert.match(on, /^Open source:\n- Add an MIT LICENSE file/m);
 });
 
-test("always ends with before/after coding steps", () => {
+test("always includes the before and after coding steps", () => {
   const out = buildPrompt({ description: "x", features: DEFAULT_FEATURES, stack: "nextjs" });
   assert.match(out, /Before coding:\n1\. Inspect the project\./);
-  assert.match(out, /After coding:\n- Run lint[\s\S]*- Summarize what changed$/);
+  assert.match(out, /After coding:\n- Run lint[\s\S]*- Summarize what changed/);
+});
+
+test("skills are listed last, in run order, only for the toggles that map to one", () => {
+  const none = buildPrompt({
+    description: "x",
+    features: { ...all(false), deploy: true, auth: true },
+    stack: "nextjs",
+  });
+  assert.doesNotMatch(none, /Skills to run/);
+
+  const every = buildPrompt({ description: "x", features: all(true), stack: "nextjs" });
+  assert.match(
+    every,
+    /Skills to run, in order:\n1\. \/onboard\n2\. \/repo-audit\n3\. \/repo-public-audit\n4\. \/repo-open-source-audit$/,
+  );
+
+  const one = buildPrompt({
+    description: "x",
+    features: { ...all(false), audit: true },
+    stack: "nextjs",
+  });
+  assert.match(one, /Skills to run, in order:\n1\. \/repo-audit$/);
 });
 
 test("stack labels cover every stack", () => {
-  assert.deepEqual(Object.keys(STACK_LABELS).sort(), ["nextjs", "other", "vite"]);
+  assert.deepEqual(Object.keys(STACK_LABELS).sort(), ["nextjs", "other"]);
 });
 
 test("each guidance section is driven by its own toggle alone", () => {

@@ -1,4 +1,4 @@
-export type Stack = "nextjs" | "vite" | "other";
+export type Stack = "nextjs" | "other";
 
 export type Features = {
   openSource: boolean;
@@ -19,18 +19,34 @@ export const DESCRIPTION_MAX = 500;
 
 export const STACK_LABELS: Record<Stack, string> = {
   nextjs: "Next.js",
-  vite: "React / Vite",
   other: "Other",
 };
 
+// Everything on by default except auth: most apps want the full ship pipeline, and
+// far from every app needs a login.
 export const DEFAULT_FEATURES: Features = {
-  openSource: false,
+  openSource: true,
   deploy: true,
   isPublic: true,
+  audit: true,
+  onboard: true,
   auth: false,
-  audit: false,
-  onboard: false,
 };
+
+// The 4 toggles that map onto a real Claude Code skill. Listed in the order the
+// skills should actually run, which is not the order the switches appear in.
+export const SKILL_COMMANDS: { key: keyof Features; command: string }[] = [
+  { key: "onboard", command: "/onboard" },
+  { key: "audit", command: "/repo-audit" },
+  { key: "isPublic", command: "/repo-public-audit" },
+  { key: "openSource", command: "/repo-open-source-audit" },
+];
+
+export const skillFor = (key: keyof Features): string | undefined =>
+  SKILL_COMMANDS.find((s) => s.key === key)?.command;
+
+export const skillsFor = (features: Features): string[] =>
+  SKILL_COMMANDS.filter(({ key }) => features[key]).map(({ command }) => command);
 
 const yesNo = (v: boolean) => (v ? "Yes" : "No");
 
@@ -124,6 +140,9 @@ export function buildPrompt({ description, features, stack }: PromptInput): stri
   if (features.openSource) sections.push(`Open source:\n${bullets(OPEN_SOURCE)}`);
 
   sections.push(`Before coding:\n${numbered(BEFORE)}`, `After coding:\n${bullets(AFTER)}`);
+
+  const skills = skillsFor(features);
+  if (skills.length) sections.push(`Skills to run, in order:\n${numbered(skills)}`);
 
   return sections.join("\n\n");
 }
