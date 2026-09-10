@@ -146,8 +146,8 @@ export function buildSetupPrompt(name: string): string {
     `Set up a new project for me. Do this part only.`,
     numbered([
       "Create a new GitHub repo for it.",
-      `Add the Claude tab alias \`${alias}\`.`,
-      `Open a new terminal tab, run \`${alias}\`, and confirm the tab opens.`,
+      `Add a shell function \`${alias}\` to my Claude tab aliases file, following the pattern already in there, so it opens a terminal tab for \`${slugify(name)}\`. Register the tab colour and icon alongside it if that file's convention has them.`,
+      `Open a NEW terminal tab and run \`${alias}\` to confirm it works. It will not resolve in this shell until the aliases file is re-sourced, which a new tab does for you.`,
     ]),
     "Do not build anything yet. Once that tab is open, stop and tell me it is ready. I will paste the build prompt into it, so the work is reported under that session rather than this one.",
   ].join("\n\n");

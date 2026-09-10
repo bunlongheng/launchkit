@@ -12,8 +12,10 @@ test("the setup prompt names the alias and stops before building", () => {
   assert.ok(out.startsWith("appName = Ice Creams"), "the name leads, trimmed");
   assert.match(out, /Create a new GitHub repo for it\./);
   // The alias must be identical in the step that creates it and the step that runs it.
-  assert.match(out, /Add the Claude tab alias `_ice_creams`\./);
-  assert.match(out, /run `_ice_creams`, and confirm the tab opens/);
+  assert.match(out, /Add a shell function `_ice_creams` to my Claude tab aliases file/);
+  assert.match(out, /Open a NEW terminal tab and run `_ice_creams`/);
+  // The tab id keeps the kebab form even though the function name cannot.
+  assert.match(out, /opens a terminal tab for `ice-creams`/);
   assert.match(out, /Do not build anything yet/);
 });
 
