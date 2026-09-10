@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Check, Copy, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -19,6 +19,15 @@ function PromptBlock({ id, step, title, hint, copyLabel, text, rows }: {
 }) {
   const [status, setStatus] = useState<CopyState>("idle");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Grow the box to its content so the whole prompt is readable without an inner
+  // scrollbar. Writing style height is a DOM mutation, not React state.
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [text]);
 
   useEffect(() => {
     if (status === "idle") return;
@@ -67,7 +76,7 @@ function PromptBlock({ id, step, title, hint, copyLabel, text, rows }: {
         readOnly
         aria-label={title}
         value={text}
-        className={`${rows} w-full resize-none rounded-2xl border border-border/70 bg-background/60 p-4 font-mono text-base leading-relaxed outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:text-[13px]`}
+        className={`${rows} w-full resize-none overflow-hidden rounded-2xl border border-border/70 bg-background/60 p-4 font-mono text-base leading-relaxed outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:text-[13px]`}
       />
     </div>
   );

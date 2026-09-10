@@ -145,7 +145,9 @@ export function buildSetupPrompt(name: string, isPublic: boolean): string {
     `appName = ${name.trim()}`,
     `Set up a new project for me. Do this part only.`,
     numbered([
-      `Create a new ${isPublic ? "public" : "private"} GitHub repo for it.`,
+      isPublic
+        ? "Create a new GitHub repo for it. Make it private for now; it goes public later, once the pre-public scan has passed."
+        : "Create a new private GitHub repo for it.",
       `Add a shell function \`${alias}\` to my Claude tab aliases file, following the pattern already in there, so it opens a terminal tab for \`${slugify(name)}\`. Register the tab colour and icon alongside it if that file's convention has them.`,
       `Open a NEW terminal tab and run \`${alias}\` to confirm it works. It will not resolve in this shell until the aliases file is re-sourced, which a new tab does for you.`,
     ]),

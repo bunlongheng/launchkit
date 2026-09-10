@@ -128,3 +128,23 @@ test("nothing is clipped and the page never scrolls sideways", async ({ page }) 
   );
   expect(clipped).toEqual([]);
 });
+
+test("open source and private can never both be selected", async ({ page }) => {
+  await page.goto("/");
+  const openSource = page.getByRole("switch", { name: "Open Source", exact: true });
+  const isPublic = page.getByRole("switch", { name: "Public", exact: true });
+
+  await expect(openSource).toBeChecked();
+  await expect(isPublic).toBeChecked();
+
+  // Going private has to drop open source, otherwise the prompt asks to publish a
+  // repo it just said to keep private.
+  await isPublic.click();
+  await expect(page.getByRole("switch", { name: "Private", exact: true })).not.toBeChecked();
+  await expect(openSource).not.toBeChecked();
+
+  // And turning open source back on has to restore public.
+  await openSource.click();
+  await expect(openSource).toBeChecked();
+  await expect(isPublic).toBeChecked();
+});

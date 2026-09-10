@@ -38,6 +38,7 @@ export function DescriptionField({ value, onChange, invalid = false }: Props) {
         onChange={(e) => onChange(e.target.value)}
         placeholder="Describe what you want to build..."
         aria-invalid={invalid || undefined}
+        aria-describedby={invalid ? "generate-hint" : undefined}
         className={cn(
           "min-h-36 flex-1 resize-none rounded-2xl bg-background/60 px-4 py-3 text-base leading-relaxed md:text-base",
           invalid && "border-destructive focus-visible:ring-destructive/40",

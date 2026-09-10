@@ -131,7 +131,7 @@ test("each guidance section is driven by its own toggle alone", () => {
 });
 
 test("visibility follows the repo the setup step actually creates", () => {
-  assert.match(buildSetupPrompt("Ice Creams", true), /Create a new public GitHub repo/);
+  assert.match(buildSetupPrompt("Ice Creams", true), /Make it private for now; it goes public later/);
   assert.match(buildSetupPrompt("Ice Creams", false), /Create a new private GitHub repo/);
 });
 

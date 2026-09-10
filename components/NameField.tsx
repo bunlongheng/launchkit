@@ -32,6 +32,7 @@ export function NameField({ value, onChange, invalid = false }: Props) {
         autoComplete="off"
         spellCheck={false}
         aria-invalid={invalid || undefined}
+        aria-describedby={invalid ? "generate-hint" : undefined}
         className={cn(
           "h-12 w-full rounded-2xl border bg-background/60 px-4 text-base outline-none placeholder:text-muted-foreground/70 focus-visible:ring-3",
           invalid
