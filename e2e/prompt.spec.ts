@@ -9,19 +9,23 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   const generate = page.getByRole("button", { name: /Generate Prompt/ });
   const output = page.getByRole("textbox", { name: "Generated prompt" });
 
+  // The output panel is not rendered at all until something has been generated.
   await expect(generate).toBeDisabled();
-  await expect(output).toHaveValue("");
+  await expect(output).toHaveCount(0);
 
   await page.getByRole("textbox", { name: "What do you want to build?" }).fill(DESCRIPTION);
   await expect(generate).toBeEnabled();
 
-  await page.getByRole("switch", { name: "Audit" }).click();
-  await page.getByRole("radio", { name: "React / Vite" }).click();
+  await page.getByRole("switch", { name: "Auth" }).click();
   await generate.click();
 
   await expect(output).toContainText(DESCRIPTION);
-  await expect(output).toContainText("Stack: React / Vite");
+  await expect(output).toContainText("Stack: Next.js");
+  await expect(output).toContainText("Authentication:");
+  // Audit ships on by default, so its section and skill appear without being touched.
   await expect(output).toContainText("Audit:");
+  await expect(output).toContainText("Skills to run, in order:");
+  await expect(output).toContainText("/repo-audit");
 
   const copy = page.getByRole("button", { name: "Copy" });
   await copy.click();
@@ -32,12 +36,12 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   // Copy silently hands over text that no longer matches the form.
   const stale = page.getByText("Settings changed - regenerate");
   await expect(stale).toHaveCount(0);
-  await page.getByRole("switch", { name: "Auth" }).click();
+  await page.getByRole("switch", { name: "Open Source" }).click();
   await expect(stale).toBeVisible();
 
   await page.getByRole("button", { name: /Regenerate Prompt/ }).click();
   await expect(stale).toHaveCount(0);
-  await expect(output).toContainText("Authentication:");
+  await expect(output).not.toContainText("/repo-open-source-audit");
 });
 
 test("the stack radiogroup is operable with the arrow keys", async ({ page }) => {
@@ -47,7 +51,7 @@ test("the stack radiogroup is operable with the arrow keys", async ({ page }) =>
 
   await nextjs.focus();
   await page.keyboard.press("ArrowRight");
-  await expect(page.getByRole("radio", { name: "React / Vite" })).toBeChecked();
+  await expect(page.getByRole("radio", { name: "Other" })).toBeChecked();
   await expect(nextjs).not.toBeChecked();
 });
 

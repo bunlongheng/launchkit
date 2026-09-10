@@ -32,7 +32,7 @@ export function PromptPreview({ prompt, stale = false }: Props) {
   };
 
   return (
-    <section className="rise flex flex-col rounded-3xl border border-border/70 bg-white/80 p-5 shadow-[0_1px_2px_rgb(0_0_0/0.03),0_24px_48px_-32px_rgb(30_27_75/0.25)] backdrop-blur sm:p-7 [animation-delay:140ms]">
+    <section className="rise flex flex-col rounded-3xl border border-border/70 bg-white/80 p-5 shadow-[0_1px_2px_rgb(0_0_0/0.03),0_24px_48px_-32px_rgb(30_27_75/0.25)] backdrop-blur sm:p-7">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5">
           <h2 className="text-base font-semibold">Your Claude Code Prompt</h2>
@@ -57,8 +57,7 @@ export function PromptPreview({ prompt, stale = false }: Props) {
         readOnly
         aria-label="Generated prompt"
         value={prompt}
-        placeholder="Your prompt will appear here..."
-        className="min-h-[24rem] flex-1 resize-none rounded-2xl border border-border/70 bg-background/60 p-4 font-mono text-base leading-relaxed sm:text-[13px] outline-none placeholder:text-muted-foreground/70 focus-visible:ring-3 focus-visible:ring-ring/50 lg:min-h-0"
+        className="min-h-[26rem] flex-1 resize-none rounded-2xl border border-border/70 bg-background/60 p-4 font-mono text-base leading-relaxed sm:text-[13px] outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       />
     </section>
   );
