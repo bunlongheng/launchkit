@@ -15,6 +15,7 @@ export default function Home() {
             width={52}
             height={52}
             priority
+            fetchPriority="high"
             className="size-12 shrink-0 drop-shadow-[0_8px_20px_rgb(88_28_235/0.35)] sm:size-14"
           />
           <div>
