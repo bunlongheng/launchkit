@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { aliasFor, APP_TYPES, buildPrompt, buildSetupPrompt, DEFAULT_FEATURES } from "../lib/buildPrompt.ts";
+import { aliasFor, APP_TYPES, buildIconPrompt, buildPrompt, buildSetupPrompt, DEFAULT_FEATURES } from "../lib/buildPrompt.ts";
 import type { Features } from "../lib/buildPrompt.ts";
 
 const all = (v: boolean): Features => ({
@@ -96,11 +96,16 @@ test("skills are listed last, in run order, only for the toggles that map to one
   assert.match(one, /Skills to run, in order:\n1\. \/repo-audit$/);
 });
 
-test("every app type carries a label and an implied stack", () => {
+test("every app type carries a label, an implied stack and an icon target", () => {
   assert.deepEqual(APP_TYPES.map((a) => a.key), ["web", "chrome", "tui", "native"]);
-  for (const { key, label, stack } of APP_TYPES) {
+  for (const { key, label, stack, iconTarget } of APP_TYPES) {
     assert.ok(label.length > 0, `${key} needs a label`);
     assert.ok(stack.length > 0, `${key} needs a stack`);
+    assert.ok(iconTarget.length > 0, `${key} needs somewhere to install the icon`);
+    assert.ok(
+      buildIconPrompt({ name: "Test App", description: "x", appType: key }).includes(iconTarget),
+      `${key} icon prompt must say where the icon lands`,
+    );
     const out = buildPrompt({ name: "Test App", description: "x", features: DEFAULT_FEATURES, appType: key });
     assert.match(out, new RegExp(`App type: ${label.replace(/[.]/g, "\\.")}`));
   }
@@ -141,4 +146,23 @@ test("the build prompt never asks to redo the setup step", () => {
   assert.doesNotMatch(out, /Create a new .* GitHub repo/);
   assert.doesNotMatch(out, /Publish the repository on GitHub/);
   assert.doesNotMatch(out, /shell alias/);
+});
+
+test("the icon prompt names the app, the idea and the house image prompt", () => {
+  const out = buildIconPrompt({ name: "  Ice Creams  ", description: "  A habit tracker  ", appType: "web" });
+  assert.ok(out.startsWith("appName = Ice Creams"), "the name leads, trimmed");
+  assert.match(out, /What it is:\n\nA habit tracker/);
+  // The image prompt has to carry the app name, or the generator has nothing to go on.
+  assert.match(out, /A modern 3D app icon for a tool called "Ice Creams"/);
+  assert.match(out, /no text, no letters, no numbers/);
+  assert.match(out, /app\/icon\.png, app\/apple-icon\.png and the web manifest/);
+  // Step 3 is the icon alone; it must not restart the setup or the build.
+  assert.doesNotMatch(out, /Create a new .* GitHub repo/);
+  assert.doesNotMatch(out, /Build the following application/);
+});
+
+test("the icon target follows the app type", () => {
+  const chrome = buildIconPrompt({ name: "Test App", description: "x", appType: "chrome" });
+  assert.match(chrome, /the manifest icons at 16, 32, 48 and 128/);
+  assert.doesNotMatch(chrome, /app\/icon\.png/);
 });
