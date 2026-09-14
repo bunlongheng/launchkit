@@ -1,7 +1,17 @@
 import { expect, test } from "@playwright/test";
 
+import type { Page } from "@playwright/test";
+
 const NAME = "Habit Kit";
 const DESCRIPTION = "A habit tracker with streaks and reminders.";
+
+// Steps 3 and 4 start folded at phone widths. The toggle is not rendered at all
+// from md up, so on desktop this is a no-op.
+const expand = async (page: Page, name: RegExp) => {
+  const toggle = page.getByRole("button", { name });
+  if (!(await toggle.isVisible())) return;
+  if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+};
 
 test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
@@ -18,7 +28,7 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await expect(output).toHaveCount(0);
 
   // Clicking while incomplete must flag the missing field and move focus to it.
-  const nameField = page.getByRole("textbox", { name: "Name your app" });
+  const nameField = page.getByRole("textbox", { name: "Name" });
   await generate.click();
   await expect(nameField).toBeFocused();
   await expect(nameField).toHaveAttribute("aria-invalid", "true");
@@ -27,13 +37,14 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await expect(output).toHaveCount(0);
 
   // Generate needs both a name and a description; a name alone is not enough.
-  await page.getByRole("textbox", { name: "Name your app" }).fill(NAME);
+  await page.getByRole("textbox", { name: "Name" }).fill(NAME);
   await expect(page.getByText("Add a description to generate")).toBeVisible();
   await generate.click();
-  await expect(page.getByRole("textbox", { name: "What do you want to build?" })).toBeFocused();
-  await page.getByRole("textbox", { name: "What do you want to build?" }).fill(DESCRIPTION);
+  await expect(page.getByRole("textbox", { name: "Description" })).toBeFocused();
+  await page.getByRole("textbox", { name: "Description" }).fill(DESCRIPTION);
   await expect(generate).toBeEnabled();
 
+  await expand(page, /Features/);
   await page.getByRole("switch", { name: "Auth", exact: true }).click();
   await generate.click();
 
@@ -71,6 +82,7 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
 
   // Changing a setting must flag the on-screen prompt as out of date, otherwise
   // Copy silently hands over text that no longer matches the form.
+  await expand(page, /Features/);
   const stale = page.getByText("Settings changed - regenerate");
   await expect(stale).toHaveCount(0);
   await page.getByRole("switch", { name: "Open Source", exact: true }).click();
@@ -83,6 +95,7 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
 
 test("the app type radiogroup is operable with the arrow keys", async ({ page }) => {
   await page.goto("/");
+  await expand(page, /App type/);
   const web = page.getByRole("radio", { name: /Web App/ });
   await expect(web).toBeChecked();
 
@@ -104,8 +117,8 @@ test("a blocked clipboard write is surfaced instead of silently doing nothing", 
   });
   await page.goto("/");
 
-  await page.getByRole("textbox", { name: "Name your app" }).fill(NAME);
-  await page.getByRole("textbox", { name: "What do you want to build?" }).fill(DESCRIPTION);
+  await page.getByRole("textbox", { name: "Name" }).fill(NAME);
+  await page.getByRole("textbox", { name: "Description" }).fill(DESCRIPTION);
   await page.getByRole("button", { name: /Generate Prompt/ }).click();
   await page.getByRole("tab", { name: /Build/ }).click();
   await page.getByRole("button", { name: "Copy the build prompt" }).click();
@@ -123,8 +136,8 @@ test("a blocked clipboard write is surfaced instead of silently doing nothing", 
 
 test("nothing is clipped and the page never scrolls sideways", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("textbox", { name: "What do you want to build?" }).fill(DESCRIPTION);
-  await page.getByRole("textbox", { name: "Name your app" }).fill(NAME);
+  await page.getByRole("textbox", { name: "Description" }).fill(DESCRIPTION);
+  await page.getByRole("textbox", { name: "Name" }).fill(NAME);
   await page.getByRole("button", { name: /Generate Prompt/ }).click();
   await page.getByRole("tab", { name: /Build/ }).click();
   await expect(page.getByRole("textbox", { name: "Paste in the new tab" })).toBeVisible();
@@ -139,6 +152,8 @@ test("nothing is clipped and the page never scrolls sideways", async ({ page }) 
   const clipped = await page.evaluate(() =>
     [...document.querySelectorAll("main span, main h1, main h2, main label")]
       .filter((el) => el.children.length === 0 && (el as HTMLElement).offsetParent !== null)
+      // Screen-reader-only text is clipped to a 1px box on purpose.
+      .filter((el) => !el.closest(".sr-only"))
       .filter((el) => el.scrollWidth > el.clientWidth + 1)
       .map((el) => (el.textContent || "").trim())
       .filter(Boolean),
@@ -148,6 +163,7 @@ test("nothing is clipped and the page never scrolls sideways", async ({ page }) 
 
 test("open source and private can never both be selected", async ({ page }) => {
   await page.goto("/");
+  await expand(page, /Features/);
   const openSource = page.getByRole("switch", { name: "Open Source", exact: true });
   const isPublic = page.getByRole("switch", { name: "Public", exact: true });
 

@@ -78,7 +78,9 @@ export function AppBuilder() {
           generate();
         }}
         className="rise rounded-3xl border border-border/70 bg-white/80 p-5 shadow-[0_1px_2px_rgb(0_0_0/0.03),0_24px_48px_-32px_rgb(30_27_75/0.25)] backdrop-blur sm:p-7 [animation-delay:60ms]">
-        <div className="grid gap-7 md:grid-cols-2">
+        {/* 60/40 rather than an even split: the description is the part you actually
+            write in, the 3 pickers on the right are all fixed height. */}
+        <div className="grid gap-7 md:grid-cols-[3fr_2fr]">
           <DescriptionField
             value={description}
             onChange={setDescription}

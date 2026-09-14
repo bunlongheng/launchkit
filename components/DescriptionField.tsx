@@ -17,7 +17,7 @@ export function DescriptionField({ value, onChange, invalid = false }: Props) {
     // the app type and features stack put together.
     <div className="flex h-full flex-col">
       <div className="mb-3 flex items-center justify-between">
-        <StepLabel n={1} htmlFor="description">What do you want to build?</StepLabel>
+        <StepLabel n={1} htmlFor="description">Description</StepLabel>
         {invalid ? (
           // A 0/4000 counter says nothing useful on an empty field that just failed
           // validation, so it gives way to the same Required label the name field uses.
@@ -36,11 +36,13 @@ export function DescriptionField({ value, onChange, invalid = false }: Props) {
         value={value}
         maxLength={DESCRIPTION_MAX}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Describe what you want to build..."
+        placeholder="What do you want to build?"
         aria-invalid={invalid || undefined}
         aria-describedby={invalid ? "generate-hint" : undefined}
         className={cn(
-          "min-h-36 flex-1 resize-none rounded-2xl bg-background/60 px-4 py-3 text-base leading-relaxed md:text-base",
+          // 24px: the idea is the one thing you write here, so it gets read back at
+          // headline size rather than form-field size.
+          "min-h-36 flex-1 resize-none rounded-2xl bg-background/60 px-4 py-3 text-2xl leading-relaxed md:text-2xl",
           invalid && "border-destructive focus-visible:ring-destructive/40",
         )}
       />

@@ -1,7 +1,7 @@
 import { useRef, type ComponentType, type KeyboardEvent } from "react";
-import { StepLabel } from "@/components/StepLabel";
+import { CollapsibleStep } from "@/components/CollapsibleStep";
 import { ChromeMark, NextMark, RustMark, SwiftMark } from "@/components/BrandIcons";
-import { APP_TYPES, type AppType } from "@/lib/buildPrompt";
+import { APP_TYPES, appTypeFor, type AppType } from "@/lib/buildPrompt";
 import { cn } from "@/lib/utils";
 
 type Props = { value: AppType; onChange: (v: AppType) => void };
@@ -36,9 +36,19 @@ export function AppTypeSelector({ value, onChange }: Props) {
     }
   };
 
+  const Selected = MARKS[value];
+
   return (
-    <div>
-      <div className="mb-3"><StepLabel n={3}>App type</StepLabel></div>
+    <CollapsibleStep
+      n={3}
+      title="App type"
+      summary={
+        <span className="flex items-center gap-1.5">
+          <Selected className="size-4 shrink-0 text-foreground" />
+          {appTypeFor(value).label}
+        </span>
+      }
+    >
       <div role="radiogroup" aria-label="App type" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {APP_TYPES.map(({ key, label, stack }, i) => {
           const selected = key === value;
@@ -72,6 +82,6 @@ export function AppTypeSelector({ value, onChange }: Props) {
           );
         })}
       </div>
-    </div>
+    </CollapsibleStep>
   );
 }
