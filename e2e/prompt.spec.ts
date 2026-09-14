@@ -181,3 +181,114 @@ test("open source and private can never both be selected", async ({ page }) => {
   await expect(openSource).toBeChecked();
   await expect(isPublic).toBeChecked();
 });
+
+// The real recogniser needs a microphone and a network speech service, so the tests
+// drive a stand-in with the same shape and check the wiring around it.
+const fakeSpeech = () => {
+  class FakeRecognition {
+    lang = "";
+    continuous = false;
+    interimResults = false;
+    onresult: ((e: unknown) => void) | null = null;
+    onerror: ((e: unknown) => void) | null = null;
+    onend: (() => void) | null = null;
+    static starts = 0;
+    start() {
+      FakeRecognition.starts++;
+      (window as unknown as { __speech?: FakeRecognition }).__speech = this;
+    }
+    stop() {
+      this.onend?.();
+    }
+  }
+  const w = window as unknown as Record<string, unknown>;
+  w.SpeechRecognition = FakeRecognition;
+  w.__starts = () => FakeRecognition.starts;
+  delete w.webkitSpeechRecognition;
+};
+
+test("talking fills the description and leaves anything already typed alone", async ({ page }) => {
+  await page.addInitScript(fakeSpeech);
+  await page.goto("/");
+
+  const description = page.getByRole("textbox", { name: "Description" });
+  await description.fill("An app");
+
+  const mic = page.getByRole("button", { name: "Talk instead of typing" });
+  await mic.click();
+  await expect(page.getByRole("button", { name: "Stop talking" })).toBeVisible();
+  await expect(page.getByText("Listening...")).toBeVisible();
+
+  // Interim words are replaced as they settle, never appended twice.
+  const say = (transcript: string, isFinal: boolean) =>
+    page.evaluate(
+      ({ transcript, isFinal }) => {
+        const r = (window as unknown as { __speech: { onresult: (e: unknown) => void } }).__speech;
+        const result = Object.assign([{ transcript }], { isFinal });
+        r.onresult({ resultIndex: 0, results: Object.assign([result], { length: 1 }) });
+      },
+      { transcript, isFinal },
+    );
+
+  await say("that counts", false);
+  await expect(description).toHaveValue("An app that counts");
+  await say("that counts my chores", true);
+  await expect(description).toHaveValue("An app that counts my chores");
+
+  await page.getByRole("button", { name: "Stop talking" }).click();
+  await expect(mic).toBeVisible();
+});
+
+test("no microphone button where the browser cannot do speech", async ({ page }) => {
+  await page.addInitScript(() => {
+    const w = window as unknown as Record<string, unknown>;
+    delete w.SpeechRecognition;
+    delete w.webkitSpeechRecognition;
+  });
+  await page.goto("/");
+
+  await expect(page.getByRole("textbox", { name: "Description" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Talk instead of typing/ })).toHaveCount(0);
+});
+
+test("the page is allowed to use the microphone it offers", async ({ page }) => {
+  await page.goto("/");
+
+  // Permissions-Policy: microphone=() blocks the Web Speech API in Chromium, so the
+  // mic button would render and then fail with a permission error.
+  const allowed = await page.evaluate(() => {
+    const policy = (document as unknown as { featurePolicy?: { allowsFeature: (f: string) => boolean } }).featurePolicy;
+    return policy ? policy.allowsFeature("microphone") : null;
+  });
+  if (allowed !== null) expect(allowed).toBe(true);
+});
+
+test("a pause does not end the dictation, only the stop button does", async ({ page }) => {
+  await page.addInitScript(fakeSpeech);
+  await page.goto("/");
+
+  const description = page.getByRole("textbox", { name: "Description" });
+  await page.getByRole("button", { name: "Talk instead of typing" }).click();
+
+  const settle = (transcript: string) =>
+    page.evaluate((transcript) => {
+      const r = (window as unknown as { __speech: { onresult: (e: unknown) => void } }).__speech;
+      r.onresult({ resultIndex: 0, results: [Object.assign([{ transcript }], { isFinal: true })] });
+    }, transcript);
+
+  // The browser ends a session on its own after a pause. That must start the next
+  // one, keep what was said, and leave the button in its listening state.
+  await settle("an app for my dinosaur");
+  await page.evaluate(() => (window as unknown as { __speech: { onend: () => void } }).__speech.onend());
+  await expect(page.getByRole("button", { name: "Stop talking" })).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { __starts: () => number }).__starts())).toBe(2);
+
+  // The next session starts its results over; the earlier words must survive it.
+  await settle("that collects stars");
+  await expect(description).toHaveValue("an app for my dinosaur that collects stars");
+
+  await page.getByRole("button", { name: "Stop talking" }).click();
+  await page.evaluate(() => (window as unknown as { __speech: { onend: () => void } }).__speech.onend());
+  await expect(page.getByRole("button", { name: "Talk instead of typing" })).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { __starts: () => number }).__starts())).toBe(2);
+});

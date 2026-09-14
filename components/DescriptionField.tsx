@@ -2,6 +2,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { DESCRIPTION_MAX } from "@/lib/buildPrompt";
 import { StepLabel } from "@/components/StepLabel";
+import { DictateButton } from "@/components/DictateButton";
 
 type Props = { value: string; onChange: (v: string) => void; invalid?: boolean };
 
@@ -31,21 +32,27 @@ export function DescriptionField({ value, onChange, invalid = false }: Props) {
           </span>
         )}
       </div>
-      <Textarea
-        id="description"
-        value={value}
-        maxLength={DESCRIPTION_MAX}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="What do you want to build?"
-        aria-invalid={invalid || undefined}
-        aria-describedby={invalid ? "generate-hint" : undefined}
-        className={cn(
-          // 24px: the idea is the one thing you write here, so it gets read back at
-          // headline size rather than form-field size.
-          "min-h-36 flex-1 resize-none rounded-2xl bg-background/60 px-4 py-3 text-2xl leading-relaxed md:text-2xl",
-          invalid && "border-destructive focus-visible:ring-destructive/40",
-        )}
-      />
+      {/* Relative, so the mic can sit inside the box: a kid can tap it and talk
+          instead of typing the whole idea out. */}
+      <div className="relative flex flex-1 flex-col">
+        <Textarea
+          id="description"
+          value={value}
+          maxLength={DESCRIPTION_MAX}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="What do you want to build?"
+          aria-invalid={invalid || undefined}
+          aria-describedby={invalid ? "generate-hint" : undefined}
+          className={cn(
+            // 24px: the idea is the one thing you write here, so it gets read back at
+            // headline size rather than form-field size. The bottom padding keeps the
+            // last line clear of the mic.
+            "min-h-36 flex-1 resize-none rounded-2xl bg-background/60 px-4 pt-3 pb-16 text-2xl leading-relaxed md:text-2xl",
+            invalid && "border-destructive focus-visible:ring-destructive/40",
+          )}
+        />
+        <DictateButton value={value} onChange={onChange} max={DESCRIPTION_MAX} />
+      </div>
     </div>
   );
 }

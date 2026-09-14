@@ -38,6 +38,10 @@ the 3 or 4 choices that actually vary; it assembles the rest.
 - Name the app and describe it in up to 4000 characters, with a counter that turns
   amber at the ceiling rather than silently swallowing a long paste. The description
   gets 60% of the form and 24px text, since it is the only field you write prose into.
+- A microphone button inside the description box: tap it and talk instead of typing,
+  which is how a child gets an idea in. Interim words appear as they are heard and
+  settle in place, anything already typed is kept, and the button is not rendered at
+  all in a browser without speech recognition.
 - On a phone the app type and feature lists start folded behind their own answer -
   the selected type's mark, and the marks of whatever is switched on - so the whole
   form fits on 1 screen. From `md` up both are open and the toggle is not rendered.
@@ -159,6 +163,8 @@ app/
   opengraph-image.jpg   # 1200x630 share card
 components/
   AppBuilder.tsx        # the only stateful component
+  CollapsibleStep.tsx   # folds a step behind its answer at phone widths
+  DictateButton.tsx     # Web Speech dictation for the description
   BrandIcons.tsx        # generated: official GitHub, Vercel, Next.js, Chrome, Rust, Swift marks
   NameField.tsx         # app name, previewing the tab alias it produces
   DescriptionField.tsx  # textarea plus character counter
