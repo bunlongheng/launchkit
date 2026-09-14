@@ -49,6 +49,11 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await expect(setup).toContainText("_habit_kit");
   await expect(setup).toContainText("Do not build anything yet");
 
+  // Step 3 is the icon, pasted in the same tab once the build is done.
+  const iconPrompt = page.getByRole("textbox", { name: "Then the app icon" });
+  await expect(iconPrompt).toContainText('A modern 3D app icon for a tool called "Habit Kit"');
+  await expect(iconPrompt).toContainText("app/icon.png");
+
   const copy = page.getByRole("button", { name: "Copy the build prompt" });
   await copy.click();
   await expect(copy).toContainText("Copied");

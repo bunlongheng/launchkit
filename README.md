@@ -37,10 +37,15 @@ the 3 or 4 choices that actually vary; it assembles the rest.
 
 - Name the app and describe it in up to 4000 characters, with a counter that turns
   amber at the ceiling rather than silently swallowing a long paste.
-- The output comes in 2 copyable halves, because an agent cannot move itself into a
+- The output comes in 3 copyable steps, because an agent cannot move itself into a
   new terminal tab. Step 1 runs where you are: create the repo, add the shell alias
   derived from the name, open the tab, then stop. Step 2 is the build itself, which
   you paste into that new tab so its token usage lands on that session.
+- Step 3 is the app icon, pasted into the same tab once the build is done. It carries
+  the house image prompt (one glossy 3D subject on a light gradient, no lettering) and
+  says where the finished icon installs for the app type you picked: `app/icon.png` and
+  the manifest for a web app, the MV3 manifest icons for an extension, the asset
+  catalog for a native app.
 - The alias is underscores only, never a dash, since it is used as a shell function
   name. "Ice Creams" becomes `_ice_creams`.
 - 6 toggles that each change the prompt in a real way: Open Source, Deploy, Public or
@@ -65,12 +70,13 @@ the 3 or 4 choices that actually vary; it assembles the rest.
 ## Architecture
 
 3 layers, and the dependency only ever points downward. The page is a server component
-that renders 1 stateful client component; that component owns the form state and calls 2
+that renders 1 stateful client component; that component owns the form state and calls 3
 pure functions to turn it into text. There is no server code, no database and no network
 call at runtime, so the whole site prerenders to static files.
 
-The output is split in 2 because an agent cannot move itself into a new terminal tab.
-The name alone drives the setup half; everything drives the build half.
+The output is split because an agent cannot move itself into a new terminal tab. The
+name alone drives the setup step; everything drives the build; the name, the idea and
+the app type drive the icon.
 
 ```mermaid
 flowchart LR
@@ -79,10 +85,15 @@ flowchart LR
     D[Description] --> S2
     T[6 feature toggles] --> S2
     A[App type] --> S2["buildPrompt()"]
+    N --> S3
+    D --> S3
+    A --> S3["buildIconPrompt()"]
     S1 --> P1[Step 1: repo and tab alias]
     S2 --> P2[Step 2: the build]
+    S3 --> P3[Step 3: the app icon]
     P1 --> C[Clipboard]
     P2 --> C
+    P3 --> C
 ```
 
 | Layer | Lives in | Responsibility |
@@ -149,7 +160,7 @@ components/
   DescriptionField.tsx  # textarea plus character counter
   FeatureToggles.tsx    # the 6 switches, each with its mark and skill command
   AppTypeSelector.tsx   # 4 app types, each with its mark and implied stack
-  PromptPreview.tsx     # the 2 output blocks, copy buttons, staleness pill
+  PromptPreview.tsx     # the 3 output blocks, copy buttons, staleness pill
   StepLabel.tsx         # numbered section heading
   ui/                   # shadcn primitives
 lib/

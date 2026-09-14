@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Check, Copy, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type Props = { setup: string; build: string; stale?: boolean };
+type Props = { setup: string; build: string; icon: string; stale?: boolean };
 
 type CopyState = "idle" | "copied" | "failed";
 
@@ -82,7 +82,7 @@ function PromptBlock({ id, step, title, hint, copyLabel, text, rows }: {
   );
 }
 
-export function PromptPreview({ setup, build, stale = false }: Props) {
+export function PromptPreview({ setup, build, icon, stale = false }: Props) {
   return (
     <section className="rise flex flex-col gap-6 rounded-3xl border border-border/70 bg-white/80 p-5 shadow-[0_1px_2px_rgb(0_0_0/0.03),0_24px_48px_-32px_rgb(30_27_75/0.25)] backdrop-blur sm:p-7">
       <div className="flex flex-wrap items-center gap-2.5">
@@ -111,6 +111,15 @@ export function PromptPreview({ setup, build, stale = false }: Props) {
         copyLabel="Copy the build prompt"
         text={build}
         rows="min-h-[26rem]"
+      />
+      <PromptBlock
+        id="icon-prompt"
+        step={3}
+        title="Then the app icon"
+        hint="Same tab, once the app builds: the house-style icon and where it installs."
+        copyLabel="Copy the icon prompt"
+        text={icon}
+        rows="min-h-80"
       />
     </section>
   );

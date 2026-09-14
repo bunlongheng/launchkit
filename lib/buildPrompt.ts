@@ -24,12 +24,13 @@ export const DESCRIPTION_MAX = 4000;
 export const slugify = (name: string) =>
   name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
-// The app type decides the stack, so there is nothing separate to pick.
-export const APP_TYPES: { key: AppType; label: string; stack: string }[] = [
-  { key: "web", label: "Web App", stack: "Next.js" },
-  { key: "chrome", label: "Chrome Extension", stack: "TypeScript, MV3" },
-  { key: "tui", label: "TUI", stack: "Rust" },
-  { key: "native", label: "Native", stack: "Swift" },
+// The app type decides the stack, so there is nothing separate to pick. It also
+// decides where a finished icon has to land, which differs per platform.
+export const APP_TYPES: { key: AppType; label: string; stack: string; iconTarget: string }[] = [
+  { key: "web", label: "Web App", stack: "Next.js", iconTarget: "app/icon.png, app/apple-icon.png and the web manifest" },
+  { key: "chrome", label: "Chrome Extension", stack: "TypeScript, MV3", iconTarget: "the manifest icons at 16, 32, 48 and 128" },
+  { key: "tui", label: "TUI", stack: "Rust", iconTarget: "the README header and the GitHub social preview" },
+  { key: "native", label: "Native", stack: "Swift", iconTarget: "the AppIcon set in the asset catalog" },
 ];
 
 export const appTypeFor = (key: AppType) => APP_TYPES.find((a) => a.key === key)!;
@@ -185,4 +186,34 @@ export function buildPrompt({ name, description, features, appType }: PromptInpu
   if (skills.length) sections.push(`Skills to run, in order:\n${numbered(skills)}`);
 
   return sections.join("\n\n");
+}
+
+// The house icon style, kept verbatim so every app in the set comes out looking
+// related: one glossy 3D subject on a light gradient, no lettering.
+const IMAGE_PROMPT = (app: string) => `A modern 3D app icon for a tool called "${app}" that <one-line purpose>.
+
+Subject: <the chosen metaphor as one centred 3D object, glossy rounded plastic-and-glass materials, gentle studio lighting, soft drop shadows and reflections>.
+
+Composition: one centred subject, generous padding, no text, no letters, no numbers. Clean and iconic, instantly readable at small sizes.
+
+Style: iOS-style rounded-square app icon, squircle shape, filled edge to edge. Background is a smooth light gradient (<accent tint> to white) with a faint texture. Vibrant but tasteful palette - <accent 1> and <accent 2> accents with crisp white highlights. Premium, minimal, Apple-like finish.
+
+Output: high-resolution square 1:1, centred, no border text, no watermark.`;
+
+/** Step 3. Paste into the same tab once the app builds. */
+export function buildIconPrompt({ name, description, appType }: Pick<PromptInput, "name" | "description" | "appType">): string {
+  const app = name.trim();
+  return [
+    `appName = ${app}`,
+    "Make the app icon, now that the app itself exists. Do this part only.",
+    `What it is:\n\n${description.trim()}`,
+    numbered([
+      "Pick ONE concrete visual metaphor for what the app does. A single centred subject, instantly readable at 32px, with no text, letters or numbers in the image.",
+      "Fill the metaphor, the one-line purpose and a 2-colour accent that suits the app into the image prompt below, then print the finished prompt for me.",
+      "Generate the image if you can. If you cannot, stop and wait for me to paste the PNG back.",
+      `Once the PNG is in hand, produce a rounded square icon from it at the sizes the app needs and install it into ${appTypeFor(appType).iconTarget}.`,
+      "Show it to me at 512px and at 32px, so I can see whether it still reads when it is small.",
+    ]),
+    `Image prompt:\n\n${IMAGE_PROMPT(app)}`,
+  ].join("\n\n");
 }

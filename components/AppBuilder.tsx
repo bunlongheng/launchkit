@@ -8,7 +8,7 @@ import { NameField } from "@/components/NameField";
 import { FeatureToggles } from "@/components/FeatureToggles";
 import { AppTypeSelector } from "@/components/AppTypeSelector";
 import { PromptPreview } from "@/components/PromptPreview";
-import { buildPrompt, buildSetupPrompt, DEFAULT_FEATURES, type AppType, type Features } from "@/lib/buildPrompt";
+import { buildIconPrompt, buildPrompt, buildSetupPrompt, DEFAULT_FEATURES, type AppType, type Features } from "@/lib/buildPrompt";
 
 // A one-shot animation is a DOM concern, not React state: removing the class and
 // forcing a reflow before re-adding it is what lets it replay on a second attempt.
@@ -27,7 +27,7 @@ export function AppBuilder() {
   const [description, setDescription] = useState("");
   const [features, setFeatures] = useState<Features>(DEFAULT_FEATURES);
   const [appType, setAppType] = useState<AppType>("web");
-  const [prompt, setPrompt] = useState<{ setup: string; build: string } | null>(null);
+  const [prompt, setPrompt] = useState<{ setup: string; build: string; icon: string } | null>(null);
   const [attempts, setAttempts] = useState(0);
   const outputRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +42,7 @@ export function AppBuilder() {
     setPrompt({
       setup: buildSetupPrompt(name, features.isPublic),
       build: buildPrompt({ name, description, features, appType }),
+      icon: buildIconPrompt({ name, description, appType }),
     });
   };
   const revealed = useRef(false);
@@ -117,7 +118,7 @@ export function AppBuilder() {
 
       {prompt !== null && (
         <div ref={outputRef}>
-          <PromptPreview setup={prompt.setup} build={prompt.build} stale={isStale} />
+          <PromptPreview setup={prompt.setup} build={prompt.build} icon={prompt.icon} stale={isStale} />
         </div>
       )}
     </div>
