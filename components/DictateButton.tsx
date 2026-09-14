@@ -50,6 +50,7 @@ export function DictateButton({ value, onChange, max }: Props) {
   // since. Interim words are re-sent on every event, so they cannot be appended.
   const base = useRef("");
   const settled = useRef("");
+  const retries = useRef(0);
 
   useEffect(() => () => {
     wanted.current = false;
@@ -73,6 +74,7 @@ export function DictateButton({ value, onChange, max }: Props) {
 
     base.current = value.trim();
     settled.current = "";
+    retries.current = 0;
 
     r.onresult = (e) => {
       let interim = "";
@@ -82,18 +84,25 @@ export function DictateButton({ value, onChange, max }: Props) {
         if (result.isFinal) settled.current += text;
         else interim += text;
       }
+      retries.current = 0;
       const spoken = `${settled.current}${interim}`.trim();
       const joined = base.current ? `${base.current} ${spoken}` : spoken;
       onChange(joined.slice(0, max));
     };
     r.onerror = (e) => {
       // A pause in the talking is not a fault: the browser reports no-speech, ends
-      // the session, and onend starts the next one. Only a real refusal stops us.
+      // the session, and onend starts the next one.
       if (e.error === "no-speech" || e.error === "aborted") return;
+      // The speech service drops a session now and then. Ride out a couple of those
+      // before giving up, or the mic goes quiet for no reason the user can see.
+      if (e.error === "network" && retries.current < 3) {
+        retries.current += 1;
+        return;
+      }
       wanted.current = false;
       setError(e.error === "not-allowed" || e.error === "service-not-allowed"
         ? "Microphone blocked. Allow it in the browser to talk."
-        : "Could not hear that. Try again.");
+        : "The browser stopped listening. Tap to carry on.");
       setListening(false);
     };
     r.onend = () => {
@@ -131,24 +140,30 @@ export function DictateButton({ value, onChange, max }: Props) {
   if (!supported) return null;
 
   return (
-    <>
+    <div className="mt-3 flex flex-wrap items-center gap-3">
       <button
         type="button"
         onClick={listening ? stop : start}
         aria-pressed={listening}
         aria-label={listening ? "Stop talking" : "Talk instead of typing"}
-        className={`absolute right-3 bottom-3 grid size-12 place-items-center rounded-full shadow-[0_8px_20px_-8px_rgb(30_27_75/0.45)] transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
-          listening
-            ? "bg-red-500 text-white hover:bg-red-600"
-            : "bg-linear-to-r from-primary to-violet-500 text-white hover:opacity-90"
+        className={`relative flex h-12 items-center gap-2.5 rounded-2xl px-5 text-base font-semibold text-white shadow-[0_10px_24px_-12px_rgb(30_27_75/0.6)] transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
+          listening ? "bg-red-500 hover:bg-red-600" : "bg-linear-to-r from-primary to-violet-500 hover:opacity-90"
         }`}
       >
-        {listening && <span aria-hidden className="absolute inset-0 animate-ping rounded-full bg-red-500/40" />}
         {listening ? <Square className="size-4 fill-current" /> : <Mic className="size-5" />}
+        {listening ? "Stop" : "Talk"}
       </button>
-      <p aria-live="polite" className="absolute right-17 bottom-5 text-xs font-medium text-muted-foreground">
-        {listening ? "Listening..." : error}
+      {listening && (
+        <span aria-hidden className="flex items-center gap-1.5">
+          <span className="size-2.5 animate-pulse rounded-full bg-red-500" />
+          <span className="text-sm font-medium text-red-600">Listening</span>
+        </span>
+      )}
+      {/* The sentence wraps to 5 lines beside the button on a phone, so it is kept
+          for screen readers there and only shown once there is room for it. */}
+      <p aria-live="polite" className="sr-only min-w-0 flex-1 text-sm text-muted-foreground sm:not-sr-only">
+        {listening ? "Say what you want to build. It keeps listening until you tap Stop." : error || "Tap Talk and say it out loud."}
       </p>
-    </>
+    </div>
   );
 }
