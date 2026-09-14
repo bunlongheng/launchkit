@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 import { Globe, KeyRound, Lock, ShieldCheck } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { StepLabel } from "@/components/StepLabel";
+import { CollapsibleStep } from "@/components/CollapsibleStep";
 import { GitHubMark, LocalAppsMark, VercelMark } from "@/components/BrandIcons";
 import { skillFor, type Features } from "@/lib/buildPrompt";
 
@@ -33,10 +33,24 @@ export function FeatureToggles({ value, onChange }: Props) {
     onChange(updated);
   };
 
+  const enabled = TOGGLES.filter(({ key }) => value[key]);
+
   return (
-    <fieldset>
-      <legend className="mb-3"><StepLabel n={4}>Features</StepLabel></legend>
-      <div className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/70 bg-background/60">
+    <CollapsibleStep
+      n={4}
+      title="Features"
+      summary={
+        <span className="flex items-center gap-1.5">
+          {/* The marks say which ones are on at a glance; the count is for the
+              screen reader, which gets nothing from a row of icons. */}
+          {enabled.map(({ key, Icon }) => (
+            <Icon key={key} className="size-4 shrink-0 text-muted-foreground" />
+          ))}
+          <span className="sr-only">{enabled.length} of {TOGGLES.length} on</span>
+        </span>
+      }
+    >
+      <div role="group" aria-label="Features" className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/70 bg-background/60">
         {TOGGLES.map(({ key, label, Icon }) => {
           const on = value[key];
           const skill = skillFor(key);
@@ -64,6 +78,6 @@ export function FeatureToggles({ value, onChange }: Props) {
           );
         })}
       </div>
-    </fieldset>
+    </CollapsibleStep>
   );
 }

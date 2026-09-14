@@ -10,7 +10,7 @@ export function NameField({ value, onChange, invalid = false }: Props) {
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <StepLabel n={2} htmlFor="name">Name your app</StepLabel>
+        <StepLabel n={2} htmlFor="name">Name</StepLabel>
         {invalid && !alias && (
           <span className="text-xs font-medium text-destructive">Required</span>
         )}
