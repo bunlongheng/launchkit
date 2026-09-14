@@ -9,6 +9,9 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
 
   const generate = page.getByRole("button", { name: /Generate Prompt/ });
   const output = page.getByRole("textbox", { name: "Paste in the new tab" });
+  // The step rail only exists once something has been generated. The title half of
+  // each tab label is hidden at phone widths, so match on the short label.
+  const tab = (name: RegExp) => page.getByRole("tab", { name });
 
   // The output panel is not rendered at all until something has been generated.
   await expect(page.getByText("Add a name and a description to generate")).toBeVisible();
@@ -34,6 +37,14 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await page.getByRole("switch", { name: "Auth", exact: true }).click();
   await generate.click();
 
+  // Step 1 opens selected, since it is the one you run first. Step 2 is a click away.
+  const setup = page.getByRole("textbox", { name: "Run in this tab" });
+  await expect(tab(/Setup/)).toHaveAttribute("aria-selected", "true");
+  await expect(setup).toContainText("_habit_kit");
+  await expect(setup).toContainText("Do not build anything yet");
+  await expect(output).toHaveCount(0);
+
+  await tab(/Build/).click();
   await expect(output).toContainText(DESCRIPTION);
   await expect(output).toContainText("appName = Habit Kit");
   await expect(output).toContainText("App type: Web App");
@@ -44,16 +55,15 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await expect(output).toContainText("Skills to run, in order:");
   await expect(output).toContainText("/repo-audit");
 
-  // Step 1 carries the repo and alias setup; step 2 carries the build.
-  const setup = page.getByRole("textbox", { name: "Run in this tab" });
-  await expect(setup).toContainText("_habit_kit");
-  await expect(setup).toContainText("Do not build anything yet");
-
-  // Step 3 is the icon, pasted in the same tab once the build is done.
+  // Step 3 is the icon, pasted in the same tab once the build is done. The arrow
+  // keys have to move between steps for the rail to be a real tablist.
+  await page.keyboard.press("ArrowRight");
   const iconPrompt = page.getByRole("textbox", { name: "Then the app icon" });
   await expect(iconPrompt).toContainText('A modern 3D app icon for a tool called "Habit Kit"');
   await expect(iconPrompt).toContainText("app/icon.png");
+  await expect(output).toHaveCount(0);
 
+  await tab(/Build/).click();
   const copy = page.getByRole("button", { name: "Copy the build prompt" });
   await copy.click();
   await expect(copy).toContainText("Copied");
@@ -97,6 +107,7 @@ test("a blocked clipboard write is surfaced instead of silently doing nothing", 
   await page.getByRole("textbox", { name: "Name your app" }).fill(NAME);
   await page.getByRole("textbox", { name: "What do you want to build?" }).fill(DESCRIPTION);
   await page.getByRole("button", { name: /Generate Prompt/ }).click();
+  await page.getByRole("tab", { name: /Build/ }).click();
   await page.getByRole("button", { name: "Copy the build prompt" }).click();
 
   await expect(page.getByRole("button", { name: "Copy the build prompt" })).toContainText("Copy manually");
@@ -115,6 +126,7 @@ test("nothing is clipped and the page never scrolls sideways", async ({ page }) 
   await page.getByRole("textbox", { name: "What do you want to build?" }).fill(DESCRIPTION);
   await page.getByRole("textbox", { name: "Name your app" }).fill(NAME);
   await page.getByRole("button", { name: /Generate Prompt/ }).click();
+  await page.getByRole("tab", { name: /Build/ }).click();
   await expect(page.getByRole("textbox", { name: "Paste in the new tab" })).toBeVisible();
 
   const overflow = await page.evaluate(

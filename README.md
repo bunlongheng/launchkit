@@ -37,8 +37,8 @@ the 3 or 4 choices that actually vary; it assembles the rest.
 
 - Name the app and describe it in up to 4000 characters, with a counter that turns
   amber at the ceiling rather than silently swallowing a long paste.
-- The output comes in 3 copyable steps, because an agent cannot move itself into a
-  new terminal tab. Step 1 runs where you are: create the repo, add the shell alias
+- The output comes in 3 copyable steps, laid out as a chevron rail you click or arrow
+  through, because an agent cannot move itself into a new terminal tab. Step 1 runs where you are: create the repo, add the shell alias
   derived from the name, open the tab, then stop. Step 2 is the build itself, which
   you paste into that new tab so its token usage lands on that session.
 - Step 3 is the app icon, pasted into the same tab once the build is done. It carries
@@ -61,9 +61,9 @@ the 3 or 4 choices that actually vary; it assembles the rest.
 - Read the assembled prompt in a monospace pane and copy it with 1 click.
 - Change a setting after generating and the pane flags itself as out of date, so you
   never copy a prompt that no longer matches the form.
-- Keyboard and screen reader friendly: the stack selector is a real radiogroup with
-  arrow-key navigation, every toggle is a labelled switch, and copy results are
-  announced.
+- Keyboard and screen reader friendly: the stack selector is a real radiogroup and the
+  step rail a real tablist, both with arrow-key navigation, every toggle is a labelled
+  switch, and copy results are announced.
 
 <img src="docs/screenshots/mobile.png" alt="LaunchKit on a phone, with the form stacked above the generated prompt" width="280">
 
@@ -160,7 +160,7 @@ components/
   DescriptionField.tsx  # textarea plus character counter
   FeatureToggles.tsx    # the 6 switches, each with its mark and skill command
   AppTypeSelector.tsx   # 4 app types, each with its mark and implied stack
-  PromptPreview.tsx     # the 3 output blocks, copy buttons, staleness pill
+  PromptPreview.tsx     # chevron step tabs, the active prompt, copy, staleness pill
   StepLabel.tsx         # numbered section heading
   ui/                   # shadcn primitives
 lib/
