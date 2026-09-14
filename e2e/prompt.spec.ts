@@ -192,7 +192,9 @@ const fakeSpeech = () => {
     onresult: ((e: unknown) => void) | null = null;
     onerror: ((e: unknown) => void) | null = null;
     onend: (() => void) | null = null;
+    static starts = 0;
     start() {
+      FakeRecognition.starts++;
       (window as unknown as { __speech?: FakeRecognition }).__speech = this;
     }
     stop() {
@@ -201,6 +203,7 @@ const fakeSpeech = () => {
   }
   const w = window as unknown as Record<string, unknown>;
   w.SpeechRecognition = FakeRecognition;
+  w.__starts = () => FakeRecognition.starts;
   delete w.webkitSpeechRecognition;
 };
 
@@ -258,4 +261,34 @@ test("the page is allowed to use the microphone it offers", async ({ page }) => 
     return policy ? policy.allowsFeature("microphone") : null;
   });
   if (allowed !== null) expect(allowed).toBe(true);
+});
+
+test("a pause does not end the dictation, only the stop button does", async ({ page }) => {
+  await page.addInitScript(fakeSpeech);
+  await page.goto("/");
+
+  const description = page.getByRole("textbox", { name: "Description" });
+  await page.getByRole("button", { name: "Talk instead of typing" }).click();
+
+  const settle = (transcript: string) =>
+    page.evaluate((transcript) => {
+      const r = (window as unknown as { __speech: { onresult: (e: unknown) => void } }).__speech;
+      r.onresult({ resultIndex: 0, results: [Object.assign([{ transcript }], { isFinal: true })] });
+    }, transcript);
+
+  // The browser ends a session on its own after a pause. That must start the next
+  // one, keep what was said, and leave the button in its listening state.
+  await settle("an app for my dinosaur");
+  await page.evaluate(() => (window as unknown as { __speech: { onend: () => void } }).__speech.onend());
+  await expect(page.getByRole("button", { name: "Stop talking" })).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { __starts: () => number }).__starts())).toBe(2);
+
+  // The next session starts its results over; the earlier words must survive it.
+  await settle("that collects stars");
+  await expect(description).toHaveValue("an app for my dinosaur that collects stars");
+
+  await page.getByRole("button", { name: "Stop talking" }).click();
+  await page.evaluate(() => (window as unknown as { __speech: { onend: () => void } }).__speech.onend());
+  await expect(page.getByRole("button", { name: "Talk instead of typing" })).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { __starts: () => number }).__starts())).toBe(2);
 });

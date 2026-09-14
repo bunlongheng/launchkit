@@ -42,14 +42,22 @@ export function DictateButton({ value, onChange, max }: Props) {
   const [listening, setListening] = useState(false);
   const [error, setError] = useState("");
   const recognition = useRef<Recognition | null>(null);
+  // Whether the person still wants to be heard. The browser ends a session on its
+  // own after a pause, which is what made the mic stop mid-sentence, so every end
+  // that was not asked for starts a new session.
+  const wanted = useRef(false);
   // What was already typed when the mic started, plus whatever has been finalised
   // since. Interim words are re-sent on every event, so they cannot be appended.
   const base = useRef("");
   const settled = useRef("");
 
-  useEffect(() => () => recognition.current?.stop(), []);
+  useEffect(() => () => {
+    wanted.current = false;
+    recognition.current?.stop();
+  }, []);
 
   const stop = () => {
+    wanted.current = false;
     recognition.current?.stop();
     setListening(false);
   };
@@ -79,14 +87,42 @@ export function DictateButton({ value, onChange, max }: Props) {
       onChange(joined.slice(0, max));
     };
     r.onerror = (e) => {
-      // not-allowed is the browser's own permission prompt being declined, which is
-      // an answer rather than a fault, so it gets a plainer line.
-      setError(e.error === "not-allowed" ? "Microphone blocked. Allow it in the browser to talk." : "Could not hear that. Try again.");
+      // A pause in the talking is not a fault: the browser reports no-speech, ends
+      // the session, and onend starts the next one. Only a real refusal stops us.
+      if (e.error === "no-speech" || e.error === "aborted") return;
+      wanted.current = false;
+      setError(e.error === "not-allowed" || e.error === "service-not-allowed"
+        ? "Microphone blocked. Allow it in the browser to talk."
+        : "Could not hear that. Try again.");
       setListening(false);
     };
-    r.onend = () => setListening(false);
+    r.onend = () => {
+      if (!wanted.current) {
+        setListening(false);
+        return;
+      }
+      // Anything settled belongs to the finished session; the next one starts its
+      // result list over, so fold it into the base before restarting.
+      base.current = `${base.current ? `${base.current} ` : ""}${settled.current}`.trim();
+      settled.current = "";
+      try {
+        r.start();
+      } catch {
+        // start() throws if the engine has not finished tearing the session down.
+        // One retry on the next tick is enough; give up quietly after that.
+        setTimeout(() => {
+          if (!wanted.current) return;
+          try {
+            r.start();
+          } catch {
+            setListening(false);
+          }
+        }, 250);
+      }
+    };
 
     recognition.current = r;
+    wanted.current = true;
     setError("");
     setListening(true);
     r.start();
