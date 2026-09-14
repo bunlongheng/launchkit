@@ -181,3 +181,69 @@ test("open source and private can never both be selected", async ({ page }) => {
   await expect(openSource).toBeChecked();
   await expect(isPublic).toBeChecked();
 });
+
+// The real recogniser needs a microphone and a network speech service, so the tests
+// drive a stand-in with the same shape and check the wiring around it.
+const fakeSpeech = () => {
+  class FakeRecognition {
+    lang = "";
+    continuous = false;
+    interimResults = false;
+    onresult: ((e: unknown) => void) | null = null;
+    onerror: ((e: unknown) => void) | null = null;
+    onend: (() => void) | null = null;
+    start() {
+      (window as unknown as { __speech?: FakeRecognition }).__speech = this;
+    }
+    stop() {
+      this.onend?.();
+    }
+  }
+  const w = window as unknown as Record<string, unknown>;
+  w.SpeechRecognition = FakeRecognition;
+  delete w.webkitSpeechRecognition;
+};
+
+test("talking fills the description and leaves anything already typed alone", async ({ page }) => {
+  await page.addInitScript(fakeSpeech);
+  await page.goto("/");
+
+  const description = page.getByRole("textbox", { name: "Description" });
+  await description.fill("An app");
+
+  const mic = page.getByRole("button", { name: "Talk instead of typing" });
+  await mic.click();
+  await expect(page.getByRole("button", { name: "Stop talking" })).toBeVisible();
+  await expect(page.getByText("Listening...")).toBeVisible();
+
+  // Interim words are replaced as they settle, never appended twice.
+  const say = (transcript: string, isFinal: boolean) =>
+    page.evaluate(
+      ({ transcript, isFinal }) => {
+        const r = (window as unknown as { __speech: { onresult: (e: unknown) => void } }).__speech;
+        const result = Object.assign([{ transcript }], { isFinal });
+        r.onresult({ resultIndex: 0, results: Object.assign([result], { length: 1 }) });
+      },
+      { transcript, isFinal },
+    );
+
+  await say("that counts", false);
+  await expect(description).toHaveValue("An app that counts");
+  await say("that counts my chores", true);
+  await expect(description).toHaveValue("An app that counts my chores");
+
+  await page.getByRole("button", { name: "Stop talking" }).click();
+  await expect(mic).toBeVisible();
+});
+
+test("no microphone button where the browser cannot do speech", async ({ page }) => {
+  await page.addInitScript(() => {
+    const w = window as unknown as Record<string, unknown>;
+    delete w.SpeechRecognition;
+    delete w.webkitSpeechRecognition;
+  });
+  await page.goto("/");
+
+  await expect(page.getByRole("textbox", { name: "Description" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Talk instead of typing/ })).toHaveCount(0);
+});
