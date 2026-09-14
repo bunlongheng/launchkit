@@ -40,7 +40,9 @@ export function DescriptionField({ value, onChange, invalid = false }: Props) {
         aria-invalid={invalid || undefined}
         aria-describedby={invalid ? "generate-hint" : undefined}
         className={cn(
-          "min-h-36 flex-1 resize-none rounded-2xl bg-background/60 px-4 py-3 text-base leading-relaxed md:text-base",
+          // 24px: the idea is the one thing you write here, so it gets read back at
+          // headline size rather than form-field size.
+          "min-h-36 flex-1 resize-none rounded-2xl bg-background/60 px-4 py-3 text-2xl leading-relaxed md:text-2xl",
           invalid && "border-destructive focus-visible:ring-destructive/40",
         )}
       />
