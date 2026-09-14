@@ -217,7 +217,7 @@ test("talking fills the description and leaves anything already typed alone", as
   const mic = page.getByRole("button", { name: "Talk instead of typing" });
   await mic.click();
   await expect(page.getByRole("button", { name: "Stop talking" })).toBeVisible();
-  await expect(page.getByText("Listening...")).toBeVisible();
+  await expect(page.getByText("Say what you want to build", { exact: false })).toBeVisible();
 
   // Interim words are replaced as they settle, never appended twice.
   const say = (transcript: string, isFinal: boolean) =>
