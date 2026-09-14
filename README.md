@@ -36,7 +36,11 @@ the 3 or 4 choices that actually vary; it assembles the rest.
 ## Features
 
 - Name the app and describe it in up to 4000 characters, with a counter that turns
-  amber at the ceiling rather than silently swallowing a long paste.
+  amber at the ceiling rather than silently swallowing a long paste. The description
+  gets 60% of the form and 24px text, since it is the only field you write prose into.
+- On a phone the app type and feature lists start folded behind their own answer -
+  the selected type's mark, and the marks of whatever is switched on - so the whole
+  form fits on 1 screen. From `md` up both are open and the toggle is not rendered.
 - The output comes in 3 copyable steps, laid out as a chevron rail you click or arrow
   through, because an agent cannot move itself into a new terminal tab. Step 1 runs where you are: create the repo, add the shell alias
   derived from the name, open the tab, then stop. Step 2 is the build itself, which
