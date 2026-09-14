@@ -247,3 +247,15 @@ test("no microphone button where the browser cannot do speech", async ({ page })
   await expect(page.getByRole("textbox", { name: "Description" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Talk instead of typing/ })).toHaveCount(0);
 });
+
+test("the page is allowed to use the microphone it offers", async ({ page }) => {
+  await page.goto("/");
+
+  // Permissions-Policy: microphone=() blocks the Web Speech API in Chromium, so the
+  // mic button would render and then fail with a permission error.
+  const allowed = await page.evaluate(() => {
+    const policy = (document as unknown as { featurePolicy?: { allowsFeature: (f: string) => boolean } }).featurePolicy;
+    return policy ? policy.allowsFeature("microphone") : null;
+  });
+  if (allowed !== null) expect(allowed).toBe(true);
+});
