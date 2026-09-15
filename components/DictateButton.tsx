@@ -28,9 +28,9 @@ const recognitionCtor = () => {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition;
 };
 
-type Props = { value: string; onChange: (v: string) => void; max: number };
+type Props = { value: string; onChange: (v: string) => void; max: number; stopSignal?: number };
 
-export function DictateButton({ value, onChange, max }: Props) {
+export function DictateButton({ value, onChange, max, stopSignal = 0 }: Props) {
   // Firefox has no speech recognition at all, so the button is not rendered there
   // rather than offered and then failing. The server has no window to ask, hence the
   // false server snapshot: the button appears on hydration, never before.
@@ -56,6 +56,18 @@ export function DictateButton({ value, onChange, max }: Props) {
     wanted.current = false;
     recognition.current?.stop();
   }, []);
+
+  // Generating means the description is finished, so the mic must not keep writing
+  // into it behind the prompt. The signal only counts once it changes, or the first
+  // render would read as a stop.
+  const stopped = useRef(stopSignal);
+  useEffect(() => {
+    if (stopSignal === stopped.current) return;
+    stopped.current = stopSignal;
+    wanted.current = false;
+    recognition.current?.stop();
+    setListening(false);
+  }, [stopSignal]);
 
   const stop = () => {
     wanted.current = false;

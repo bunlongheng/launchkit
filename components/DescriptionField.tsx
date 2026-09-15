@@ -4,9 +4,9 @@ import { DESCRIPTION_MAX } from "@/lib/buildPrompt";
 import { StepLabel } from "@/components/StepLabel";
 import { DictateButton } from "@/components/DictateButton";
 
-type Props = { value: string; onChange: (v: string) => void; invalid?: boolean };
+type Props = { value: string; onChange: (v: string) => void; invalid?: boolean; stopSignal?: number };
 
-export function DescriptionField({ value, onChange, invalid = false }: Props) {
+export function DescriptionField({ value, onChange, invalid = false, stopSignal = 0 }: Props) {
   // A live region on the counter would announce on every keystroke. Only speak up
   // once the limit is close enough to matter.
   const remaining = DESCRIPTION_MAX - value.length;
@@ -50,7 +50,7 @@ export function DescriptionField({ value, onChange, invalid = false }: Props) {
             invalid && "border-destructive focus-visible:ring-destructive/40",
           )}
         />
-        <DictateButton value={value} onChange={onChange} max={DESCRIPTION_MAX} />
+        <DictateButton value={value} onChange={onChange} max={DESCRIPTION_MAX} stopSignal={stopSignal} />
       </div>
     </div>
   );

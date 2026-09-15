@@ -79,20 +79,20 @@ export function PromptPreview({ setup, build, icon, stale = false }: Props) {
       text: setup,
     },
     {
-      id: "build",
-      short: "Build",
-      title: "Paste in the new tab",
-      hint: "The build itself, so its token usage lands on that session.",
-      copyLabel: "Copy the build prompt",
-      text: build,
-    },
-    {
       id: "icon",
       short: "Icon",
-      title: "Then the app icon",
-      hint: "Same tab, once the app builds: the house-style icon and where it installs.",
+      title: "Paste in the new tab",
+      hint: "The house-style icon first, so the build already has one to keep.",
       copyLabel: "Copy the icon prompt",
       text: icon,
+    },
+    {
+      id: "build",
+      short: "Build",
+      title: "Then build the app",
+      hint: "Same tab, once the icon is in, so the build lands on that session.",
+      copyLabel: "Copy the build prompt",
+      text: build,
     },
   ];
 

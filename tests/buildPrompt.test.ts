@@ -140,6 +140,14 @@ test("visibility follows the repo the setup step actually creates", () => {
   assert.match(buildSetupPrompt("Ice Creams", false), /Create a new private GitHub repo/);
 });
 
+test("the build prompt keeps the icon step 2 already made", () => {
+  const out = buildPrompt({ name: "Ice Creams", description: "x", features: DEFAULT_FEATURES, appType: "web" });
+  assert.match(out, /The app icon is already in the repo from the previous step\. Keep it, and do not generate or overwrite it\./);
+  // Onboard used to generate the icon itself, which would undo step 2.
+  assert.doesNotMatch(out, /Generate the app icon/);
+  assert.match(out, /Keep the app icon that is already in the repo and generate a baseline screenshot/);
+});
+
 test("the build prompt never asks to redo the setup step", () => {
   const out = buildPrompt({ name: "Ice Creams", description: "x", features: all(true), appType: "web" });
   // Step 1 already made the repo and the alias; repeating either would duplicate work.
@@ -156,7 +164,10 @@ test("the icon prompt names the app, the idea and the house image prompt", () =>
   assert.match(out, /A modern 3D app icon for a tool called "Ice Creams"/);
   assert.match(out, /no text, no letters, no numbers/);
   assert.match(out, /app\/icon\.png, app\/apple-icon\.png and the web manifest/);
-  // Step 3 is the icon alone; it must not restart the setup or the build.
+  // It now runs before the app exists, so it must not assume the paths are there.
+  assert.match(out, /before the app itself is built/);
+  assert.match(out, /creating those paths if the app has not been built into them yet/);
+  // Step 2 is the icon alone; it must not restart the setup or run the build.
   assert.doesNotMatch(out, /Create a new .* GitHub repo/);
   assert.doesNotMatch(out, /Build the following application/);
 });
