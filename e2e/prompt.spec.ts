@@ -18,7 +18,7 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await page.goto("/");
 
   const generate = page.getByRole("button", { name: /Generate Prompt/ });
-  const output = page.getByRole("textbox", { name: "Paste in the new tab" });
+  const output = page.getByRole("textbox", { name: "Then build the app" });
   // The step rail only exists once something has been generated. The title half of
   // each tab label is hidden at phone widths, so match on the short label.
   const tab = (name: RegExp) => page.getByRole("tab", { name });
@@ -55,7 +55,18 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await expect(setup).toContainText("Do not build anything yet");
   await expect(output).toHaveCount(0);
 
-  await tab(/Build/).click();
+  // Step 2 is the icon, pasted in the new tab before anything is built.
+  await tab(/Icon/).click();
+  const iconPrompt = page.getByRole("textbox", { name: "Paste in the new tab" });
+  await expect(iconPrompt).toContainText('A modern 3D app icon for a tool called "Habit Kit"');
+  await expect(iconPrompt).toContainText("app/icon.png");
+  await expect(iconPrompt).toContainText("before the app itself is built");
+  await expect(output).toHaveCount(0);
+
+  // Step 3 is the build, same tab, once the icon is in. The arrow keys have to move
+  // between steps for the rail to be a real tablist.
+  await page.keyboard.press("ArrowRight");
+  await expect(tab(/Build/)).toHaveAttribute("aria-selected", "true");
   await expect(output).toContainText(DESCRIPTION);
   await expect(output).toContainText("appName = Habit Kit");
   await expect(output).toContainText("App type: Web App");
@@ -65,16 +76,9 @@ test("builds, copies and invalidates a prompt", async ({ page, context }) => {
   await expect(output).toContainText("Audit:");
   await expect(output).toContainText("Skills to run, in order:");
   await expect(output).toContainText("/repo-audit");
+  // The icon is already made by this point, so the build must not redo it.
+  await expect(output).toContainText("The app icon is already in the repo");
 
-  // Step 3 is the icon, pasted in the same tab once the build is done. The arrow
-  // keys have to move between steps for the rail to be a real tablist.
-  await page.keyboard.press("ArrowRight");
-  const iconPrompt = page.getByRole("textbox", { name: "Then the app icon" });
-  await expect(iconPrompt).toContainText('A modern 3D app icon for a tool called "Habit Kit"');
-  await expect(iconPrompt).toContainText("app/icon.png");
-  await expect(output).toHaveCount(0);
-
-  await tab(/Build/).click();
   const copy = page.getByRole("button", { name: "Copy the build prompt" });
   await copy.click();
   await expect(copy).toContainText("Copied");
@@ -140,7 +144,7 @@ test("nothing is clipped and the page never scrolls sideways", async ({ page }) 
   await page.getByRole("textbox", { name: "Name" }).fill(NAME);
   await page.getByRole("button", { name: /Generate Prompt/ }).click();
   await page.getByRole("tab", { name: /Build/ }).click();
-  await expect(page.getByRole("textbox", { name: "Paste in the new tab" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Then build the app" })).toBeVisible();
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -237,6 +241,29 @@ test("talking fills the description and leaves anything already typed alone", as
 
   await page.getByRole("button", { name: "Stop talking" }).click();
   await expect(mic).toBeVisible();
+});
+
+test("generating stops the mic, so it cannot keep writing behind the prompt", async ({ page }) => {
+  await page.addInitScript(fakeSpeech);
+  await page.goto("/");
+
+  await page.getByRole("textbox", { name: "Name" }).fill(NAME);
+  await page.getByRole("textbox", { name: "Description" }).fill(DESCRIPTION);
+  await page.getByRole("button", { name: "Talk instead of typing" }).click();
+  await expect(page.getByRole("button", { name: "Stop talking" })).toBeVisible();
+
+  await page.getByRole("button", { name: /Generate Prompt/ }).click();
+  await expect(page.getByRole("button", { name: "Talk instead of typing" })).toBeVisible();
+  // Stopped for good: the session ending must not start another one.
+  await page.evaluate(() => (window as unknown as { __speech: { onend: () => void } }).__speech.onend());
+  await expect(page.getByRole("button", { name: "Talk instead of typing" })).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { __starts: () => number }).__starts())).toBe(1);
+
+  // An incomplete form still stops it, since the click is what ends the dictation.
+  await page.getByRole("button", { name: "Talk instead of typing" }).click();
+  await page.getByRole("textbox", { name: "Name" }).fill("");
+  await page.getByRole("button", { name: /Regenerate Prompt/ }).click();
+  await expect(page.getByRole("button", { name: "Talk instead of typing" })).toBeVisible();
 });
 
 test("no microphone button where the browser cannot do speech", async ({ page }) => {

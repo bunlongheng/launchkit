@@ -29,9 +29,13 @@ export function AppBuilder() {
   const [appType, setAppType] = useState<AppType>("web");
   const [prompt, setPrompt] = useState<{ setup: string; build: string; icon: string } | null>(null);
   const [attempts, setAttempts] = useState(0);
+  // Bumped on every Generate click so the mic stops listening, whether the form was
+  // complete or not.
+  const [micStop, setMicStop] = useState(0);
   const outputRef = useRef<HTMLDivElement>(null);
 
   const generate = () => {
+    setMicStop((n) => n + 1);
     if (!canGenerate) {
       setAttempts((n) => n + 1);
       // After the commit, otherwise the re-render that turns on the error border
@@ -85,6 +89,7 @@ export function AppBuilder() {
             value={description}
             onChange={setDescription}
             invalid={attempts > 0 && needsDescription}
+            stopSignal={micStop}
           />
           <div className="flex flex-col gap-7">
             <NameField

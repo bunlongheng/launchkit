@@ -90,7 +90,7 @@ const ONBOARD = [
   "Register the app in the local apps dashboard with its port, repo and start command",
   "Give it a tab colour and icon to match the alias that already exists",
   "Link the project to its deployment target",
-  "Generate the app icon and a baseline screenshot",
+  "Keep the app icon that is already in the repo and generate a baseline screenshot",
 ];
 
 const AUTH = [
@@ -156,11 +156,12 @@ export function buildSetupPrompt(name: string, isPublic: boolean): string {
   ].join("\n\n");
 }
 
-/** Step 2. Paste into the tab step 1 opened. */
+/** Step 3. Paste into the same tab once the icon is in. */
 export function buildPrompt({ name, description, features, appType }: PromptInput): string {
   const sections: string[] = [
     `appName = ${name.trim()}`,
     `Build the following application:\n\n${description.trim()}`,
+    "The app icon is already in the repo from the previous step. Keep it, and do not generate or overwrite it.",
     `Configuration:\n${bullets([
       `Open source: ${yesNo(features.openSource)}`,
       `Deploy: ${yesNo(features.deploy)}`,
@@ -200,19 +201,20 @@ Style: iOS-style rounded-square app icon, squircle shape, filled edge to edge. B
 
 Output: high-resolution square 1:1, centred, no border text, no watermark.`;
 
-/** Step 3. Paste into the same tab once the app builds. */
+/** Step 2. Paste into the tab step 1 opened. */
 export function buildIconPrompt({ name, description, appType }: Pick<PromptInput, "name" | "description" | "appType">): string {
   const app = name.trim();
   return [
     `appName = ${app}`,
-    "Make the app icon, now that the app itself exists. Do this part only.",
+    "Make the app icon first, before the app itself is built. Do this part only.",
     `What it is:\n\n${description.trim()}`,
     numbered([
       "Pick ONE concrete visual metaphor for what the app does. A single centred subject, instantly readable at 32px, with no text, letters or numbers in the image.",
       "Fill the metaphor, the one-line purpose and a 2-colour accent that suits the app into the image prompt below, then print the finished prompt for me.",
       "Generate the image if you can. If you cannot, stop and wait for me to paste the PNG back.",
-      `Once the PNG is in hand, produce a rounded square icon from it at the sizes the app needs and install it into ${appTypeFor(appType).iconTarget}.`,
+      `Once the PNG is in hand, produce a rounded square icon from it at the sizes the app needs and put it in the repo at ${appTypeFor(appType).iconTarget}, creating those paths if the app has not been built into them yet.`,
       "Show it to me at 512px and at 32px, so I can see whether it still reads when it is small.",
+      "Then stop. The build prompt comes next and it will keep this icon.",
     ]),
     `Image prompt:\n\n${IMAGE_PROMPT(app)}`,
   ].join("\n\n");
