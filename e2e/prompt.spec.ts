@@ -336,12 +336,18 @@ test("the picked tab colour lands in the setup prompt", async ({ page }) => {
     .toContainText("tab colour #FF8800 (rgb 255, 136, 0)");
 });
 
-test("a generated app comes back after a reload and refills the form", async ({ page }) => {
+test("a recent app comes back exactly as it was left, prompts and all", async ({ page }) => {
   await page.goto("/");
 
+  // Deliberately all non-default: colour, app type and a toggle, so a restore that
+  // only refilled the text boxes would fail here.
   await page.getByLabel(/^Tab colour/).fill("#00aa66");
   await page.getByRole("textbox", { name: "Name" }).fill(NAME);
   await page.getByRole("textbox", { name: "Description" }).fill(DESCRIPTION);
+  await expand(page, /App type/);
+  await page.getByRole("radio", { name: /TUI/ }).click();
+  await expand(page, /Features/);
+  await page.getByRole("switch", { name: "Auth", exact: true }).click();
   await page.getByRole("button", { name: /Generate Prompt/ }).click();
 
   const chip = page.getByRole("button", { name: NAME, exact: true });
@@ -349,9 +355,21 @@ test("a generated app comes back after a reload and refills the form", async ({ 
 
   await page.reload();
   await expect(page.getByRole("textbox", { name: "Name" })).toHaveValue("");
+  await expect(page.getByRole("textbox", { name: "Then build the app" })).toHaveCount(0);
+
   await chip.click();
 
   await expect(page.getByRole("textbox", { name: "Name" })).toHaveValue(NAME);
   await expect(page.getByRole("textbox", { name: "Description" })).toHaveValue(DESCRIPTION);
   await expect(page.getByLabel(/^Tab colour/)).toHaveValue("#00aa66");
+  await expand(page, /App type/);
+  await expect(page.getByRole("radio", { name: /TUI/ })).toBeChecked();
+  await expand(page, /Features/);
+  await expect(page.getByRole("switch", { name: "Auth", exact: true })).toBeChecked();
+
+  // The prompts are back too, and nothing needs regenerating.
+  await page.getByRole("tab", { name: /Build/ }).click();
+  await expect(page.getByRole("textbox", { name: "Then build the app" })).toContainText("Stack: Rust");
+  await expect(page.getByRole("textbox", { name: "Then build the app" })).toContainText("Authentication: Yes");
+  await expect(page.getByText("Settings changed - regenerate")).toHaveCount(0);
 });

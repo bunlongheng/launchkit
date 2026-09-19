@@ -9,8 +9,18 @@ import { FeatureToggles } from "@/components/FeatureToggles";
 import { AppTypeSelector } from "@/components/AppTypeSelector";
 import { PromptPreview } from "@/components/PromptPreview";
 import { RecentApps } from "@/components/RecentApps";
-import { buildIconPrompt, buildPrompt, buildSetupPrompt, DEFAULT_FEATURES, DEFAULT_TAB_COLOR, type AppType, type Features } from "@/lib/buildPrompt";
+import { buildIconPrompt, buildPrompt, buildSetupPrompt, DEFAULT_FEATURES, DEFAULT_TAB_COLOR, type AppType, type Features, type PromptInput } from "@/lib/buildPrompt";
 import { addToHistory, useHistory, writeHistory, type HistoryEntry } from "@/lib/history";
+
+type Prompts = { setup: string; build: string; icon: string };
+
+// The 3 prompts are a pure function of the form, which is what lets a recent app be
+// put back exactly as it was without having been stored alongside it.
+const promptsFor = ({ name, description, features, appType, tabColor }: PromptInput & { tabColor: string }): Prompts => ({
+  setup: buildSetupPrompt(name, features.isPublic, tabColor),
+  build: buildPrompt({ name, description, features, appType }),
+  icon: buildIconPrompt({ name, description, appType }),
+});
 
 // A one-shot animation is a DOM concern, not React state: removing the class and
 // forcing a reflow before re-adding it is what lets it replay on a second attempt.
@@ -33,7 +43,7 @@ export function AppBuilder() {
   // The last 10 generated apps, kept in localStorage rather than in state so a
   // reload, and a second tab, both see the same list.
   const history = useHistory();
-  const [prompt, setPrompt] = useState<{ setup: string; build: string; icon: string } | null>(null);
+  const [prompt, setPrompt] = useState<Prompts | null>(null);
   const [attempts, setAttempts] = useState(0);
   // Bumped on every Generate click so the mic stops listening, whether the form was
   // complete or not.
@@ -49,22 +59,19 @@ export function AppBuilder() {
       requestAnimationFrame(() => nudge(needsName ? "name" : "description"));
       return;
     }
-    setPrompt({
-      setup: buildSetupPrompt(name, features.isPublic, tabColor),
-      build: buildPrompt({ name, description, features, appType }),
-      icon: buildIconPrompt({ name, description, appType }),
-    });
+    setPrompt(promptsFor({ name, description, features, appType, tabColor }));
     writeHistory(addToHistory(history, { name: name.trim(), description: description.trim(), features, appType, tabColor, at: Date.now() }));
   };
 
-  // Restoring only refills the form. Generating again is one click and keeps what
-  // is on screen honest about the settings that produced it.
+  // Picking a recent app puts it back exactly as it was left: every setting, and the
+  // 3 prompts it had already produced. Nothing to regenerate, nothing to re-answer.
   const restore = (entry: HistoryEntry) => {
     setName(entry.name);
     setDescription(entry.description);
     setFeatures(entry.features);
     setAppType(entry.appType);
     setTabColor(entry.tabColor);
+    setPrompt(promptsFor(entry));
   };
   const revealed = useRef(false);
 
@@ -80,10 +87,8 @@ export function AppBuilder() {
   // buildPrompt is a pure string join, so recomputing it every render is cheaper
   // than tracking a snapshot of the inputs. It is only used to tell whether what
   // is on screen still matches the current settings.
-  const isStale = prompt !== null && (
-    prompt.build !== buildPrompt({ name, description, features, appType }) ||
-    prompt.setup !== buildSetupPrompt(name, features.isPublic, tabColor)
-  );
+  const current = promptsFor({ name, description, features, appType, tabColor });
+  const isStale = prompt !== null && (prompt.build !== current.build || prompt.setup !== current.setup);
 
   // The output sits below the form, so bring it into view the first time it appears.
   // Regenerating afterwards leaves the scroll position alone.
