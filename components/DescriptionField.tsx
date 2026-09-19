@@ -17,7 +17,7 @@ export function DescriptionField({ value, onChange, invalid = false, stopSignal 
     // Stretches to the height of the column beside it, so the box is as long as
     // the app type and features stack put together.
     <div className="flex h-full flex-col">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-2.5 flex items-center justify-between">
         <StepLabel n={1} htmlFor="description">Description</StepLabel>
         {invalid ? (
           // A 0/4000 counter says nothing useful on an empty field that just failed

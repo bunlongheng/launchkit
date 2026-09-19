@@ -62,7 +62,7 @@ export function FeatureToggles({ value, onChange }: Props) {
           return (
             <label
               key={key}
-              className="flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors has-data-checked:bg-primary/[0.04]"
+              className="flex cursor-pointer items-center gap-3 px-4 py-2.5 transition-colors has-data-checked:bg-primary/[0.04]"
             >
               <RowIcon className="size-4 shrink-0 text-muted-foreground" />
               <span className="min-w-0 flex-1">

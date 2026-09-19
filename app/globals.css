@@ -55,6 +55,16 @@
 }
 
 
+/* The form is one screenful at 90% browser zoom and spills past it at 100%, so the
+   root unit is shrunk by that same 10% instead of asking anyone to zoom. Every size
+   in the page is in rem, so the whole layout comes down with it. Phones keep the
+   full 16px, or iOS zooms the page the moment an input is focused. */
+@media (min-width: 768px) {
+  html {
+    font-size: 90%;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -17,9 +17,17 @@ export type PromptInput = {
 };
 
 export const NAME_MAX = 40;
+// The tab colour the prompt asks for, matching the app's own primary. The registry
+// it lands in stores rgb, so the hex is only ever the thing the user picks.
+export const DEFAULT_TAB_COLOR = "#544CE2";
 // 500 was far too tight: a real 1,745 character description was silently truncated
 // mid-word by the browser on paste. Generous now, still bounded.
 export const DESCRIPTION_MAX = 4000;
+
+export const hexToRgb = (hex: string) => {
+  const v = parseInt(hex.replace("#", ""), 16);
+  return { r: (v >> 16) & 255, g: (v >> 8) & 255, b: v & 255 };
+};
 
 export const slugify = (name: string) =>
   name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -140,8 +148,9 @@ export const aliasFor = (name: string) =>
   `_${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "")}`;
 
 /** Step 1. Run in the current tab, then stop and hand off. */
-export function buildSetupPrompt(name: string, isPublic: boolean): string {
+export function buildSetupPrompt(name: string, isPublic: boolean, tabColor: string = DEFAULT_TAB_COLOR): string {
   const alias = aliasFor(name);
+  const { r, g, b } = hexToRgb(tabColor);
   return [
     `appName = ${name.trim()}`,
     `Set up a new project for me. Do this part only.`,
@@ -149,7 +158,7 @@ export function buildSetupPrompt(name: string, isPublic: boolean): string {
       isPublic
         ? "Create a new GitHub repo for it. Make it private for now; it goes public later, once the pre-public scan has passed."
         : "Create a new private GitHub repo for it.",
-      `Add a shell function \`${alias}\` to my Claude tab aliases file, following the pattern already in there, so it opens a terminal tab for \`${slugify(name)}\`. Register the tab colour and icon alongside it if that file's convention has them.`,
+      `Add a shell function \`${alias}\` to my Claude tab aliases file, following the pattern already in there, so it opens a terminal tab for \`${slugify(name)}\`. Register it with the tab colour ${tabColor.toUpperCase()} (rgb ${r}, ${g}, ${b}) and an icon alongside it, following that file's convention.`,
       `Open a NEW terminal tab and run \`${alias}\` to confirm it works. It will not resolve in this shell until the aliases file is re-sourced, which a new tab does for you.`,
     ]),
     "Do not build anything yet. Once that tab is open, stop and tell me it is ready. I will paste the build prompt into it, so the work is reported under that session rather than this one.",

@@ -28,7 +28,7 @@ export function CollapsibleStep({ n, title, summary, children }: Props) {
           <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
         </span>
       </button>
-      <div className="mb-3 hidden md:block">
+      <div className="mb-2.5 hidden md:block">
         <StepLabel n={n}>{title}</StepLabel>
       </div>
       <div id={id} className={open ? undefined : "hidden md:block"}>

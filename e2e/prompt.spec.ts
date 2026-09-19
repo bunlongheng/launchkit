@@ -319,3 +319,39 @@ test("a pause does not end the dictation, only the stop button does", async ({ p
   await expect(page.getByRole("button", { name: "Talk instead of typing" })).toBeVisible();
   expect(await page.evaluate(() => (window as unknown as { __starts: () => number }).__starts())).toBe(2);
 });
+
+test("the picked tab colour lands in the setup prompt", async ({ page }) => {
+  await page.goto("/");
+
+  const swatch = page.getByLabel(/^Tab colour/);
+  await expect(swatch).toHaveValue("#544ce2");
+  await swatch.fill("#ff8800");
+  await expect(page.getByLabel("Tab colour, #FF8800")).toBeVisible();
+
+  await page.getByRole("textbox", { name: "Name" }).fill(NAME);
+  await page.getByRole("textbox", { name: "Description" }).fill(DESCRIPTION);
+  await page.getByRole("button", { name: /Generate Prompt/ }).click();
+
+  await expect(page.getByRole("textbox", { name: "Run in this tab" }))
+    .toContainText("tab colour #FF8800 (rgb 255, 136, 0)");
+});
+
+test("a generated app comes back after a reload and refills the form", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByLabel(/^Tab colour/).fill("#00aa66");
+  await page.getByRole("textbox", { name: "Name" }).fill(NAME);
+  await page.getByRole("textbox", { name: "Description" }).fill(DESCRIPTION);
+  await page.getByRole("button", { name: /Generate Prompt/ }).click();
+
+  const chip = page.getByRole("button", { name: NAME, exact: true });
+  await expect(chip).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole("textbox", { name: "Name" })).toHaveValue("");
+  await chip.click();
+
+  await expect(page.getByRole("textbox", { name: "Name" })).toHaveValue(NAME);
+  await expect(page.getByRole("textbox", { name: "Description" })).toHaveValue(DESCRIPTION);
+  await expect(page.getByLabel(/^Tab colour/)).toHaveValue("#00aa66");
+});
