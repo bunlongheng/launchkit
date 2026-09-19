@@ -64,7 +64,7 @@ export function AppTypeSelector({ value, onChange }: Props) {
               onClick={() => onChange(key)}
               onKeyDown={onKeyDown}
               className={cn(
-                "flex items-center gap-2.5 rounded-2xl border px-3 py-2.5 text-left transition-all outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                "flex items-center gap-2.5 rounded-2xl border px-3 py-2 text-left transition-all outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
                 selected
                   ? "border-primary/40 bg-primary/[0.06]"
                   : "border-border/70 bg-background/60 hover:bg-primary/[0.03]",

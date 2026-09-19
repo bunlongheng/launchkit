@@ -177,3 +177,10 @@ test("the icon target follows the app type", () => {
   assert.match(chrome, /the manifest icons at 16, 32, 48 and 128/);
   assert.doesNotMatch(chrome, /app\/icon\.png/);
 });
+
+test("the setup prompt bakes in the picked tab colour as hex and rgb", () => {
+  const out = buildSetupPrompt("Ice Creams", false, "#ff8800");
+  assert.match(out, /tab colour #FF8800 \(rgb 255, 136, 0\)/);
+  // Left alone, it still asks for one: a tab with no colour is the thing this fixes.
+  assert.match(buildSetupPrompt("Ice Creams", false), /tab colour #544CE2 \(rgb 84, 76, 226\)/);
+});

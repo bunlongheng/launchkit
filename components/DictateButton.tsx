@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Mic, Square } from "lucide-react";
 
 // The Web Speech API has no TypeScript lib definition and is still prefixed in
@@ -42,15 +42,104 @@ export function DictateButton({ value, onChange, max, stopSignal = 0 }: Props) {
   const [listening, setListening] = useState(false);
   const [error, setError] = useState("");
   const recognition = useRef<Recognition | null>(null);
-  // Whether the person still wants to be heard. The browser ends a session on its
-  // own after a pause, which is what made the mic stop mid-sentence, so every end
-  // that was not asked for starts a new session.
+  // Whether the person still wants to be heard. Nothing else is allowed to end the
+  // dictation: the browser closes a session after a pause, on a dropped network, or
+  // for no stated reason at all, and every one of those starts the next session.
   const wanted = useRef(false);
   // What was already typed when the mic started, plus whatever has been finalised
   // since. Interim words are re-sent on every event, so they cannot be appended.
   const base = useRef("");
   const settled = useRef("");
-  const retries = useRef(0);
+  // A session that is believed to be running, and when it was started. Together they
+  // are what the watchdog reads to tell a live mic from a dead one.
+  const running = useRef(false);
+  const startedAt = useRef(0);
+  const shortRuns = useRef(0);
+
+  // The session that should be opened next. Held in a ref so a session can start its
+  // own successor without depending on itself.
+  const latest = useRef<() => void>(() => {});
+
+  // One recognition session, which is a disposable thing: it is started, it ends on
+  // its own, and onend opens the next one. Reusing the object across sessions is what
+  // used to leave the mic silently off, so each one is built fresh.
+  const session = useCallback(() => {
+    const Ctor = recognitionCtor();
+    if (!Ctor || !wanted.current) return;
+
+    const r = new Ctor();
+    r.lang = navigator.language || "en-US";
+    r.continuous = true;
+    r.interimResults = true;
+
+    r.onresult = (e) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const result = e.results[i];
+        const text = result[0].transcript;
+        if (result.isFinal) settled.current += text;
+        else interim += text;
+      }
+      shortRuns.current = 0;
+      const spoken = `${settled.current}${interim}`.trim();
+      const joined = base.current ? `${base.current} ${spoken}` : spoken;
+      onChange(joined.slice(0, max));
+    };
+
+    r.onerror = (e) => {
+      // A refused microphone is the only thing that cannot be recovered from, since
+      // there is nothing to listen to. Everything else - no-speech, aborted, network,
+      // audio-capture - just ends the session, and onend opens the next one.
+      if (e.error !== "not-allowed" && e.error !== "service-not-allowed") return;
+      wanted.current = false;
+      running.current = false;
+      setError("Microphone blocked. Allow it in the browser to talk.");
+      setListening(false);
+    };
+
+    r.onend = () => {
+      running.current = false;
+      // Anything settled belongs to the finished session; the next one starts its
+      // result list over, so fold it into the base before restarting.
+      base.current = `${base.current ? `${base.current} ` : ""}${settled.current}`.trim();
+      settled.current = "";
+      if (!wanted.current) {
+        setListening(false);
+        return;
+      }
+      // Sessions that die the instant they start would otherwise spin the engine, so
+      // after a few in a row the next one waits a beat. It still never gives up.
+      shortRuns.current = Date.now() - startedAt.current < 400 ? shortRuns.current + 1 : 0;
+      if (shortRuns.current >= 3) setTimeout(() => latest.current(), 600);
+      else latest.current();
+    };
+
+    recognition.current = r;
+    startedAt.current = Date.now();
+    try {
+      r.start();
+      running.current = true;
+    } catch {
+      // start() throws while the previous session is still tearing down. Leaving
+      // running false is the signal for the watchdog to try again.
+      running.current = false;
+    }
+  }, [max, onChange]);
+
+  // The watchdog. A session can go quiet without ever calling onend - a backgrounded
+  // tab, a start() that threw - and the button would still say Listening while nothing
+  // was being heard. This is what makes "on until you stop it" true.
+  useEffect(() => {
+    latest.current = session;
+  }, [session]);
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!wanted.current || running.current) return;
+      if (Date.now() - startedAt.current < 1500) return;
+      latest.current();
+    }, 1500);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => () => {
     wanted.current = false;
@@ -76,77 +165,14 @@ export function DictateButton({ value, onChange, max, stopSignal = 0 }: Props) {
   };
 
   const start = () => {
-    const Ctor = recognitionCtor();
-    if (!Ctor) return;
-
-    const r = new Ctor();
-    r.lang = navigator.language || "en-US";
-    r.continuous = true;
-    r.interimResults = true;
-
+    if (!recognitionCtor()) return;
     base.current = value.trim();
     settled.current = "";
-    retries.current = 0;
-
-    r.onresult = (e) => {
-      let interim = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const result = e.results[i];
-        const text = result[0].transcript;
-        if (result.isFinal) settled.current += text;
-        else interim += text;
-      }
-      retries.current = 0;
-      const spoken = `${settled.current}${interim}`.trim();
-      const joined = base.current ? `${base.current} ${spoken}` : spoken;
-      onChange(joined.slice(0, max));
-    };
-    r.onerror = (e) => {
-      // A pause in the talking is not a fault: the browser reports no-speech, ends
-      // the session, and onend starts the next one.
-      if (e.error === "no-speech" || e.error === "aborted") return;
-      // The speech service drops a session now and then. Ride out a couple of those
-      // before giving up, or the mic goes quiet for no reason the user can see.
-      if (e.error === "network" && retries.current < 3) {
-        retries.current += 1;
-        return;
-      }
-      wanted.current = false;
-      setError(e.error === "not-allowed" || e.error === "service-not-allowed"
-        ? "Microphone blocked. Allow it in the browser to talk."
-        : "The browser stopped listening. Tap to carry on.");
-      setListening(false);
-    };
-    r.onend = () => {
-      if (!wanted.current) {
-        setListening(false);
-        return;
-      }
-      // Anything settled belongs to the finished session; the next one starts its
-      // result list over, so fold it into the base before restarting.
-      base.current = `${base.current ? `${base.current} ` : ""}${settled.current}`.trim();
-      settled.current = "";
-      try {
-        r.start();
-      } catch {
-        // start() throws if the engine has not finished tearing the session down.
-        // One retry on the next tick is enough; give up quietly after that.
-        setTimeout(() => {
-          if (!wanted.current) return;
-          try {
-            r.start();
-          } catch {
-            setListening(false);
-          }
-        }, 250);
-      }
-    };
-
-    recognition.current = r;
+    shortRuns.current = 0;
     wanted.current = true;
     setError("");
     setListening(true);
-    r.start();
+    session();
   };
 
   if (!supported) return null;
@@ -158,7 +184,7 @@ export function DictateButton({ value, onChange, max, stopSignal = 0 }: Props) {
         onClick={listening ? stop : start}
         aria-pressed={listening}
         aria-label={listening ? "Stop talking" : "Talk instead of typing"}
-        className={`relative flex h-12 items-center gap-2.5 rounded-2xl px-5 text-base font-semibold text-white shadow-[0_10px_24px_-12px_rgb(30_27_75/0.6)] transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
+        className={`relative flex h-11 items-center gap-2.5 rounded-2xl px-5 text-base font-semibold text-white shadow-[0_10px_24px_-12px_rgb(30_27_75/0.6)] transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
           listening ? "bg-red-500 hover:bg-red-600" : "bg-linear-to-r from-primary to-violet-500 hover:opacity-90"
         }`}
       >
